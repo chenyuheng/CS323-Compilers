@@ -8,8 +8,8 @@ BISON=bison
 	$(FLEX) lex.l
 .syntax: syntax.y
 	$(BISON) -t -d syntax.y
-# parentheses: .lex .syntax
-# 	$(CC) syntax.tab.c -lfl -ly -o parentheses.out
+#parentheses: .lex .syntax
+#	$(CC) syntax.tab.c -lfl -ly -o parentheses.out
 libparen: .lex .syntax
 	$(CC) syntax.tab.c -lfl -ly -fPIC --shared -o libparen.so
 clean:
