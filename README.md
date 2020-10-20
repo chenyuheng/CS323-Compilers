@@ -11,7 +11,14 @@ Coursework of SUSTech CS323-Compilers (2020fall)
 | Lab3 | Sept.22 | Bison tutorial | Check the "project1-output_format.pdf" |
 | Lab4 | Sept.29 | Error recovery in Bison | |
 | - | Oct.6 | - | National Day & Golden week |
-| Lab5 | Oct.13 | (TBU) | Project 2 release |
+| Lab5 | Oct.13 | Maintaining symbol table | Project 2 release (due: Nov.15) |
+| Lab6 | Oct.20 | **LR parsing** & Type checking | |
+| Lab7 | Oct.27 | Scope checking | |
+| Lab8 | Nov.3 | (TBU) | |
+
++ The bold contents are theoretical sessions
+
+---
 
 ## Useful Resources
 
@@ -22,6 +29,9 @@ Coursework of SUSTech CS323-Compilers (2020fall)
 
 + Data Structures
   + Data structure and algorithms tutorial series: [Linked List](https://www.tutorialspoint.com/data_structures_algorithms/linked_list_algorithms.htm)
+  + Data structure and algorithms tutorial series: [Binary Search Tree](https://www.tutorialspoint.com/data_structures_algorithms/binary_search_tree.htm)
+  + Data structure and algorithms tutorial series: [Hash Table](https://www.tutorialspoint.com/data_structures_algorithms/hash_data_structure.htm)
+  + Hash function algorithms: [node-hashes](https://github.com/liushoukai/node-hashes)
 
 + Flex/Bison Metacompiler
   + Their predecessors: [The LEX & YACC Page](http://dinosaur.compilertools.net/)
