@@ -1,0 +1,6 @@
+int testla() {
+    int test_var_1 = 0;
+    int b = 9;
+    int c;
+    c = b test_var_1;
+

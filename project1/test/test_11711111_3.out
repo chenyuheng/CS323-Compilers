@@ -1,0 +1,205 @@
+Program (1)
+  ExtDefList (1)
+    ExtDef (1)
+      Specifier (1)
+        TYPE: int
+      ExtDecList (1)
+        VarDec (1)
+          ID: a
+      SEMI
+    ExtDefList (2)
+      ExtDef (2)
+        Specifier (2)
+          TYPE: int
+        ExtDecList (2)
+          VarDec (2)
+            ID: b
+        SEMI
+      ExtDefList (3)
+        ExtDef (3)
+          Specifier (3)
+            TYPE: int
+          ExtDecList (3)
+            VarDec (3)
+              ID: d
+          SEMI
+        ExtDefList (4)
+          ExtDef (4)
+            Specifier (4)
+              TYPE: char
+            ExtDecList (4)
+              VarDec (4)
+                ID: c
+            SEMI
+          ExtDefList (5)
+            ExtDef (5)
+              Specifier (5)
+                TYPE: int
+              SEMI
+            ExtDefList (6)
+              ExtDef (6)
+                Specifier (6)
+                  TYPE: float
+                SEMI
+              ExtDefList (7)
+                ExtDef (7)
+                  Specifier (7)
+                    TYPE: char
+                  SEMI
+                ExtDefList (9)
+                  ExtDef (9)
+                    Specifier (9)
+                      TYPE: int
+                    FunDec (9)
+                      ID: main
+                      LP
+                      VarList (9)
+                        ParamDec (9)
+                          Specifier (9)
+                            TYPE: char
+                          VarDec (9)
+                            VarDec (9)
+                              ID: arg1
+                            LB
+                            INT: 32
+                            RB
+                        COMMA
+                        VarList (9)
+                          ParamDec (9)
+                            Specifier (9)
+                              TYPE: char
+                            VarDec (9)
+                              ID: arg2
+                          COMMA
+                          VarList (9)
+                            ParamDec (9)
+                              Specifier (9)
+                                TYPE: int
+                              VarDec (9)
+                                VarDec (9)
+                                  VarDec (9)
+                                    VarDec (9)
+                                      VarDec (9)
+                                        ID: arg3
+                                      LB
+                                      INT: 3
+                                      RB
+                                    LB
+                                    INT: 4
+                                    RB
+                                  LB
+                                  INT: 5
+                                  RB
+                                LB
+                                INT: 66666
+                                RB
+                      RP
+                    CompSt (9)
+                      LC
+                      DefList (10)
+                        Def (10)
+                          Specifier (10)
+                            TYPE: int
+                          DecList (10)
+                            Dec (10)
+                              VarDec (10)
+                                ID: okla
+                              ASSIGN
+                              Exp (10)
+                                INT: 4095
+                          SEMI
+                      StmtList (11)
+                        Stmt (11)
+                          RETURN
+                          Exp (11)
+                            ID: really_main
+                            LP
+                            RP
+                          SEMI
+                      RC
+                  ExtDefList (14)
+                    ExtDef (14)
+                      Specifier (14)
+                        TYPE: int
+                      ExtDecList (14)
+                        VarDec (14)
+                          VarDec (14)
+                            VarDec (14)
+                              VarDec (14)
+                                VarDec (14)
+                                  ID: lalala
+                                LB
+                                INT: 3
+                                RB
+                              LB
+                              INT: 4
+                              RB
+                            LB
+                            INT: 5
+                            RB
+                          LB
+                          INT: 666
+                          RB
+                      SEMI
+                    ExtDefList (15)
+                      ExtDef (15)
+                        Specifier (15)
+                          TYPE: float
+                        ExtDecList (15)
+                          VarDec (15)
+                            ID: hahaha
+                        SEMI
+                      ExtDefList (16)
+                        ExtDef (16)
+                          Specifier (16)
+                            TYPE: char
+                          ExtDecList (16)
+                            VarDec (16)
+                              VarDec (16)
+                                ID: nanana
+                              LB
+                              INT: 32
+                              RB
+                          SEMI
+                        ExtDefList (18)
+                          ExtDef (18)
+                            Specifier (18)
+                              TYPE: int
+                            FunDec (18)
+                              ID: really_main
+                              LP
+                              RP
+                            CompSt (18)
+                              LC
+                              DefList (19)
+                                Def (19)
+                                  Specifier (19)
+                                    TYPE: int
+                                  DecList (19)
+                                    Dec (19)
+                                      VarDec (19)
+                                        ID: return_value
+                                      ASSIGN
+                                      Exp (19)
+                                        ID: main
+                                        LP
+                                        Exp (19)
+                                          Exp (19)
+                                            ID: nanana
+                                          COMMA
+                                          Exp (19)
+                                            Exp (19)
+                                              ID: c
+                                            COMMA
+                                            Exp (19)
+                                              Exp (19)
+                                                ID: lalala
+                                        RP
+                                  SEMI
+                              StmtList (20)
+                                Stmt (20)
+                                  RETURN
+                                  Exp (20)
+                                    ID: return_value
+                                  SEMI
+                              RC

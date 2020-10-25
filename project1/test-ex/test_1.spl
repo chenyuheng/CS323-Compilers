@@ -1,0 +1,16 @@
+// This is one comment
+int main() { // This is another comment // /*
+    int i;
+    int a, b, s;
+    a = 12; // this is also comment
+    b = 33;
+    for (i = 0; i < 100; i = i + 1) {
+        /* This is the statement. */
+        s = a + b;
+    }
+    return s;
+}
+/*
+comment again and again
+again and again
+*/

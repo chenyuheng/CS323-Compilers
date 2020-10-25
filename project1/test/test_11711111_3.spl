@@ -1,0 +1,21 @@
+int a;
+int b;
+int d;
+char c;
+int;
+float;
+char;
+
+int main(char arg1[32], char arg2, int arg3[3][4][5][66666]) {
+    int okla = 0xfff;
+    return really_main();
+}
+
+int lalala[3][4][5][666];
+float hahaha;
+char nanana[32];
+
+int really_main() {
+    int return_value = main(nanana, c, lalala);
+    return return_value;
+}
