@@ -1,6 +1,7 @@
 %{
     #include"lex.yy.c"
     void yyerror(const char*);
+    JsonObject *root;
 %}
 %union {
   JsonObject* type_obj;
@@ -11,12 +12,12 @@
 %token <type_obj> STRING NUMBER TRUE FALSE VNULL
 %token LZN
 %type <type_obj> Json Value;
-%type <type_mem> Member Members Object;
+%type <type_mem> Object Member Members;
 %type <type_arr> Array Values;
 %%
 
 Json:
-      Value { $$ = $1; }
+      Value { $$ = $1; root = $1;}
     ;
 Value:
       Object {
@@ -25,7 +26,6 @@ Value:
         node->members = $1;
         $$ = node;
       }
-    | Object Value error { puts("misplaced quoted value, recovered"); }
     | Array {
         JsonObject* node = (JsonObject*)malloc(sizeof(JsonObject));
         node->category = ARR;
@@ -49,7 +49,6 @@ Members:
       $1->next = $3;
       $$ = $1;
     }
-    | Member COLON Members error { puts("colon instead of comma, recovered"); }
     ;
 Member:
       STRING COLON Value {
@@ -59,19 +58,10 @@ Member:
         node->next = NULL;
         $$ = node;
       }
-      | STRING Value error { puts("missing colon, recovered"); }
-      | STRING COMMA Value error { puts("comma instead of colon, recovered"); }
-      | STRING COLON Value COMMA error { puts("extra comma, recovered"); }
-      | STRING COLON COLON Value error { puts("double colon, recovered"); }
     ;
 Array:
       LB RB { $$ = NULL; }
     | LB Values RB { $$ = $2; }
-    | LB Values RC error { puts("unmatched right bracket, recovered"); }
-    | LB Values RB COMMA error { puts("comma after the close, recovered"); }
-    | LB Values COMMA COMMA RB error { puts("double extra comma, recovered"); }
-    | LB Values error { puts("unclosed array, recovered"); }
-    | LB Values RB RB error { puts("extra close, recovered"); }
     ;
 Values:
       Value {
@@ -86,13 +76,80 @@ Values:
         node->next = $3;
         $$ = node;
     }
-    | Value COMMA error { puts("extra comma, recovered"); }
-    | COMMA Values error { puts("missing value, recovered"); }
     ;
 %%
+void printArrayValue(struct ArrayValue *arval, int ind, int is_head);
+void printObjectMember(struct ObjectMember *member, int ind, int is_head);
+void printJsonObject(struct JsonObject *node, int ind) {
+  if (node == NULL) {
+    return;
+  }
+  switch (node->category) {
+    case OBJ:
+      printObjectMember(node->members, ind, 1);
+      break;
+    case ARR:
+      printArrayValue(node->values, ind, 1);
+      break;
+    case STR:
+      printf("%*s", ind * 2, "");
+      printf("%s\n", node->string);
+      break;
+    case NUM:
+      printf("%*s", ind * 2, "");
+      printf("%lf\n", node->number);
+      break;
+    case BOO:
+      printf("%*s", ind * 2, "");
+      if (node->boolean) {
+        printf("True\n");
+      } else {
+        printf("False\n");
+      }
+      break;
+    case VNU:
+      printf("%*s", ind * 2, "");
+      printf("null\n");
+      break;
+    default:
+      break;
+  }
+}
+
+void printArrayValue(struct ArrayValue *arval, int ind, int is_head) {
+  if (is_head) {
+    printf("%*s", ind * 2, "");
+    printf("[ \n");
+  }
+  printJsonObject(arval->value, ind + 1);
+  if (arval->next) {
+    printArrayValue(arval->next, ind, 0);
+  } else {
+    printf("%*s", ind * 2, "");
+    printf("]\n");
+  }
+}
+
+void printObjectMember(struct ObjectMember *member, int ind, int is_head) {
+  if (is_head) {
+    printf("%*s", ind * 2, "");
+    printf("{\n");
+  }
+    printf("%*s", ind * 2, "");
+  printf("%s: \n", member->key);
+  printJsonObject(member->value, ind + 1);
+  if (member->next) {
+    printObjectMember(member->next, ind, 0);
+  } else {
+    printf("%*s", ind * 2, "");
+    printf("}\n");
+  }
+}
+
+
 
 void yyerror(const char *s){
-    printf("syntax error: ");
+    printf("syntax error.\n");
 }
 
 int main(int argc, char **argv){
@@ -105,5 +162,6 @@ int main(int argc, char **argv){
         exit(-1);
     }
     yyparse();
+    printJsonObject(root, 0);
     return 0;
 }

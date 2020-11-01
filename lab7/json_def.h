@@ -20,4 +20,3 @@ typedef struct ArrayValue {
     struct ArrayValue *next;                                       
 } ArrayValue;
 
-JsonObject* get_node(char *type);
