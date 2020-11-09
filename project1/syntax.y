@@ -135,6 +135,8 @@ CompSt: LC DefList StmtList RC {
     processErrorB("Missing specifier", @3.first_line);
 } | LC DefList StmtList error {
     processErrorB("Missing closing curly brace '}'", @$.first_line);
+} | LC RC {
+    processErrorB("Missing statements in composition set.", @$.first_line);
 };
 StmtList: Stmt StmtList {
     $$ = get_node("StmtList", "", @$.first_line, 2, $1, $2);
@@ -163,6 +165,14 @@ Stmt: Exp SEMI {
     processErrorB("Missing closing parenthesis ')'", @$.first_line);
 } | IF LP Exp error Stmt ELSE Stmt {
     processErrorB("Missing closing parenthesis ')'", @$.first_line);
+} | IF LP RP error {
+    processErrorB("Missing exp in IF statement", @$.first_line);
+    processErrorB("Missing statement in IF statement", @$.first_line);
+} | IF LP RP error Stmt ELSE {
+    processErrorB("Missing exp in IF statement", @$.first_line);
+    processErrorB("Missing statement in ELSE statement", @6.first_line);
+} | IF LP RP error Stmt ELSE Stmt {
+    processErrorB("Missing exp in IF statement", @$.first_line);
 } | WHILE LP Exp error Stmt {
     processErrorB("Missing closing parenthesis ')'", @$.first_line);
 } | FOR LP ExpOrNull SEMI ExpOrNull SEMI ExpOrNull error Stmt {
@@ -260,9 +270,9 @@ Exp: Exp ASSIGN Exp {
 };
 
 Args: Exp COMMA Args {
-    $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
+    $$ = get_node("Args", "", @$.first_line, 3, $1, $2, $3);
 } | Exp {
-    $$ = get_node("Exp", "", @$.first_line, 1, $1);
+    $$ = get_node("Args", "", @$.first_line, 1, $1);
 };
 
 ExpOrNull: Exp {

@@ -16,7 +16,7 @@
         if (yylval.type_node == NULL) {
             printf("Lexer: null result");
         }
-        //printf("%s\n", token);
+       // printf("%s\n", token);
     }
 
     void processErrorA(char* cause) {
@@ -35,9 +35,10 @@ float {int}+\.{int}+
 char \'.\'
 hexchar \'\\[xX]{hexdigit}{1,2}\'
 id {letter}({letter}|{digit})*
-nonid {digit}{id}
+nonid {digit}+{id}
+nondigit 0+{digit}*
 ws [ \t]
-br \n
+br [\n\r]
 nonhexchar \'\\[xX][0-9a-zA-Z]*\'
 
 
@@ -121,7 +122,8 @@ nonhexchar \'\\[xX][0-9a-zA-Z]*\'
 "}"     { processToken("RC");       return RC; }
 
 {nonid}         { processErrorA("unknown lexeme"); return ID; }
-{nonhexchar}    {processErrorA("unknown lexeme"); return SPECIAL; }
+{nondigit}      { processErrorA("unknown lexeme"); return SPECIAL; }
+{nonhexchar}    { processErrorA("unknown lexeme"); return SPECIAL; }
 .               { processErrorA("unknown lexeme"); return SPECIAL; }
 %%
 

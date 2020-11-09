@@ -1,5 +1,4 @@
 splc:
-	mkdir bin
 	bison -d -v syntax.y -t
 	flex lex.l
 	gcc  syntax.tab.c node.c main.c -lfl -o bin/splc

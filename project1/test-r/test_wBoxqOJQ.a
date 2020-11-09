@@ -1,0 +1,4 @@
+Error type B at Line 3: Missing statements in composition set.
+Error type A at Line 6: unknown lexeme 1_a
+Error type B at Line 3: Missing exp in IF statement
+Error type B at Line 3: Missing statement in IF statement
