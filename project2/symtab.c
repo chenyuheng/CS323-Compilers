@@ -3,10 +3,7 @@
 /*
  * symbol table type, linked list impl
  */
-struct symtab {
-    entry entry;
-    struct symtab *next;
-};
+
 
 // ************************************************************
 //    Your implementation goes here
@@ -28,7 +25,8 @@ int symtab_insert(symtab *self, char *key, VAL_T value){
     }
     symtab *node = malloc(sizeof(symtab));
     memset(node, '\0', sizeof(symtab));
-    entry_init(&node->entry, key, value);
+    strcpy(node->entry.key, key);
+    node->entry.value = value;
     node->next = NULL;
     ptr->next = node;
     return 1;
@@ -41,7 +39,7 @@ VAL_T symtab_lookup(symtab *self, char *key){
             return ptr->entry.value;
         ptr = ptr->next;
     }
-    return -1;
+    return NULL;
 }
 
 int symtab_remove(symtab *self, char *key){

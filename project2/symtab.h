@@ -4,22 +4,22 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include"node.h"
 
 #define KEY_LEN 32
-#define VAL_T int
+#define VAL_T Type*
 
-typedef struct symtab symtab;
-
-/* symbol table entry, only used internally */
 typedef struct entry {
     char key[KEY_LEN+1];
     VAL_T value;
 } entry;
 
-void entry_init(entry *self, char *key, VAL_T value){
-    sprintf(self->key, "%s", key);
-    self->value = value;
-}
+typedef struct symtab {
+    entry entry;
+    struct symtab *next;
+} symtab;
+/* symbol table entry, only used internally */
+
 
 
 // init a single symbol table

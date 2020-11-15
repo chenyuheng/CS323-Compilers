@@ -1,5 +1,6 @@
 %{
     #include"node.h"
+    #include"symtab.h"
 	#include"syntax.tab.h"
 
 	extern int errorLexFlag;

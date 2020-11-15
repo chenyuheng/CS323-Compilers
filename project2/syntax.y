@@ -1,10 +1,10 @@
 %{
 	#include"lex.yy.c"
-
     extern void yyerror(char*);
     extern int yylineno;
     extern int errorSyntaxFlag;
     extern Node* root;
+    extern symtab* global_symtab;
 
     void processErrorB(char* cause, int lineno) {
         errorSyntaxFlag = 1;
@@ -73,6 +73,7 @@ ExtDefList: ExtDef ExtDefList {
 };
 ExtDef: Specifier ExtDecList SEMI {
     $$ = get_node("ExtDef", "", @$.first_line, 3, $1, $2, $3);
+    Type* base_type = $1->type;
 } | Specifier SEMI {
     $$ = get_node("ExtDef", "", @$.first_line, 2, $1, $2);
 } | Specifier ExtDecList error {
@@ -91,6 +92,7 @@ ExtDecList: VarDec {
 /* specifier */
 Specifier: TYPE {
     $$ = get_node("Specifier", "", @$.first_line, 1, $1);
+    $$->type = $1->type;
 } | StructSpecifier {
     $$ = get_node("Specifier", "", @$.first_line, 1, $1);
 };

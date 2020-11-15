@@ -1,4 +1,5 @@
 #include "node.h"
+#include "symtab.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "syntax.tab.h"
@@ -10,6 +11,7 @@ int errorLexFlag;
 int errorSyntaxFlag;
 extern int yyrestart(FILE *f);
 Node *root;
+symtab* global_symtab;
 extern int yylineno;
 
 int main(int argc, char **argv){
@@ -19,6 +21,7 @@ int main(int argc, char **argv){
         return EXIT_FAIL;
     }
     else if(argc == 2){
+        global_symtab = symtab_init();
         FILE *f = fopen(argv[1], "r");
         if(!f){
             perror(argv[1]);
