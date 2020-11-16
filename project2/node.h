@@ -17,11 +17,12 @@ typedef struct Node {
 
 typedef struct Type {
 	char name[32];
-	enum {PRIMITIVE, ARRAY, STRUCTURE} category;
+	enum {PRIMITIVE, ARRAY, STRUCTURE, FUNCTION} category;
 	union {
 		enum {P_INT, P_FLOAT, P_CHAR } primitive;
 		struct Array *array;
 		struct FieldList *structure;
+		struct Function *function;
 	};
 } Type;
 
@@ -29,6 +30,12 @@ typedef struct Array {
 	struct Type *base;
 	int size;
 } Array;
+
+typedef struct Function {
+	char name[32];
+	struct Type* returnType;
+	struct FieldList* args;
+} Function;
 
 typedef struct FieldList {
 	char name[32];
@@ -41,6 +48,12 @@ Node* get_node(char *type_str, char *value, int line_num, int children_num, ...)
 void print_tree(Node* root, int height);
 Type* get_primitive_type(char* primitive_type);
 Type* get_structure_type(char* name);
-void processExtDef(Node* root);
-char* getVarDecId(Node* VarDec);
+void processExtDefVar(Node* root);
+void processExtDefFun(Node* root);
+Node* getVarDecId(Node* VarDec);
+void processDef(Node* root);
+void processVarList(Node* VarList);
+void processBinaryArithmeticOperation(Node* Exp);
+void print_type(Type* type, int is_end);
+int typecmp(Type* t1, Type* t2);
 #endif

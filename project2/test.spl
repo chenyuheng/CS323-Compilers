@@ -1,0 +1,12 @@
+int a;
+int b, c, d;
+float f;
+int a(struct node t, int ddds){
+	int x[1] = 1;
+}
+float b(int dafdasx ) {
+	dafdasx = d();
+}
+int g[2][2];
+
+int ddd;

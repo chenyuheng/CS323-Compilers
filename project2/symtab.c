@@ -20,9 +20,11 @@ int symtab_insert(symtab *self, char *key, VAL_T value){
     symtab *ptr = self;
     while(ptr->next != NULL){
         if(strcmp(ptr->entry.key, key) == 0)
-            return 0;
+            return -1;
         ptr = ptr->next;
     }
+    if(strcmp(ptr->entry.key, key) == 0)
+        return -1;
     symtab *node = malloc(sizeof(symtab));
     memset(node, '\0', sizeof(symtab));
     strcpy(node->entry.key, key);
