@@ -76,7 +76,6 @@ ExtDefList: ExtDef ExtDefList {
 };
 ExtDef: Specifier ExtDecList SEMI {
     $$ = get_node("ExtDef", "", @$.first_line, 3, $1, $2, $3);
-    processExtDefVar($$);
 } | Specifier SEMI {
     $$ = get_node("ExtDef", "", @$.first_line, 2, $1, $2);
 } | Specifier ExtDecList error {
@@ -85,7 +84,6 @@ ExtDef: Specifier ExtDecList SEMI {
     processErrorB("Missing semicolon ';'", @$.first_line);
 } | Specifier FunDec { return_type = $1->type; } CompSt {
     $$ = get_node("ExtDef", "", @$.first_line, 3, $1, $2, $4);
-    processExtDefFun($$);
 };
 ExtDecList: VarDec {
     $$ = get_node("ExtDecList", "", @$.first_line, 1, $1);
@@ -96,20 +94,15 @@ ExtDecList: VarDec {
 /* specifier */
 Specifier: TYPE {
     $$ = get_node("Specifier", "", @$.first_line, 1, $1);
-    $$->type = $1->type;
 } | StructSpecifier {
     $$ = get_node("Specifier", "", @$.first_line, 1, $1);
-    $$->type = $1->type;
 };
 StructSpecifier: STRUCT ID LC DefList RC {
     $$ = get_node("StructSpecifier", "", @$.first_line, 5, $1, $2, $3, $4, $5);
-    $$->type = get_structure_type($$);
-    symtab_insert(structure_symtab, $2->value, $$->type);
 } | STRUCT ID LC DefList error {
     processErrorB("Missing closing curly brace '}'", @$.first_line);
 } | STRUCT ID {
     $$ = get_node("StructSpecifier", "", @$.first_line, 2, $1, $2);
-    $$->type = symtab_lookup(structure_symtab, $2->value);
 };
 
 /* declarator */
@@ -122,7 +115,6 @@ VarDec: ID {
 };
 FunDec: ID LP VarList RP {
     $$ = get_node("FunDec", "", @$.first_line, 4, $1, $2, $3, $4);
-    processVarList($3);
 } | ID LP VarList error {
     processErrorB("Missing closing parenthesis ')'", @$.first_line);
 } | ID LP RP {
@@ -160,10 +152,6 @@ Stmt: Exp SEMI {
     $$ = get_node("Stmt", "", @$.first_line, 1, $1);
 } | RETURN Exp SEMI {
     $$ = get_node("Stmt", "", @$.first_line, 3, $1, $2, $3);
-    if (!typecmp($2->type, return_type)) {
-        printf("Error type 8 at Line %d: incompatiable return type\n", @1.first_line);
-    }
-    // TODO: return type check
 } | Exp error {
     processErrorB("Missing semicolon ';'", @$.first_line);
 } | RETURN Exp error {
@@ -207,7 +195,6 @@ DefList: Def DefList {
 };
 Def: Specifier DecList SEMI {
     $$ = get_node("Def", "", @$.first_line, 3, $1, $2, $3);
-    processDef($$);
 } | Specifier DecList error {
     processErrorB("Missing semicolon ';'", @$.first_line);
 };
@@ -231,118 +218,54 @@ Exp: Exp ASSIGN Exp {
     $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
 } | Exp LT Exp {
     $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
-    processBinaryArithmeticOperation($$);
 } | Exp LE Exp {
     $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
-    processBinaryArithmeticOperation($$);
 } | Exp GT Exp {
     $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
-    processBinaryArithmeticOperation($$);
 } | Exp GE Exp {
     $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
-    processBinaryArithmeticOperation($$);
 } | Exp NE Exp {
     $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
-    processBinaryArithmeticOperation($$);
 } | Exp EQ Exp {
     $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
-    processBinaryArithmeticOperation($$);
 } | Exp PLUS Exp {
     $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
-    processBinaryArithmeticOperation($$);
 } | Exp MINUS Exp {
     $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
-    processBinaryArithmeticOperation($$);
 } | Exp MUL Exp {
     $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
-    processBinaryArithmeticOperation($$);
 } | Exp DIV Exp {
     $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
-    processBinaryArithmeticOperation($$);
 } | LP Exp RP {
     $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
-    $$->type = $2->type;
 } | LP Exp error {
     processErrorB("Missing closing parenthesis ')'", @$.first_line);
 } | MINUS Exp {
     $$ = get_node("Exp", "", @$.first_line, 2, $1, $2);
-    $$->type = $2->type;
 } | NOT Exp {
     $$ = get_node("Exp", "", @$.first_line, 2, $1, $2);
-    $$->type = $2->type;
 } | ID LP Args RP {
     $$ = get_node("Exp", "", @$.first_line, 4, $1, $2, $3, $4);
-    Type* type = symtab_lookup(function_symtab, $1->value)->function->returnType;
-    if (type != NULL) {
-        $$->type = type;
-    } else {
-        printf("Error type 2 at Line %d: function %s is invoiked without definition.\n", @1.first_line, $1->value);
-    }
 } | ID LP Args error {
     processErrorB("Missing closing parenthesis ')'", @$.first_line);
 } | ID LP RP {
     $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
-    Type* type = symtab_lookup(function_symtab, $1->value)->function->returnType;
-    if (type != NULL) {
-        $$->type = type;
-    } else {
-        printf("Error type 2 at Line %d: function %s is invoiked without definition.\n", @1.first_line, $1->value);
-    }
 } | ID LP error {
     processErrorB("Missing closing parenthesis ')'", @$.first_line);
 } | Exp LB Exp RB {
     $$ = get_node("Exp", "", @$.first_line, 4, $1, $2, $3, $4);
-    if ($1->type != NULL) {
-        if ($1->type->category == ARRAY) {
-            $$->type = $1->type->array->base;
-        } else {
-            printf("Error type 10 at Line %d: applying indexing operator on non-array type variable.\n",
-                @1.first_line);
-        }
-    } else {
-        printf("Error type 10 at Line %d: applying indexing operator on non-array type variable.\n",
-                @1.first_line);
-    }
-    if ($3->type != NULL) {
-        if ($3->type->category != PRIMITIVE) {
-            printf("Error tye 12 at Line %d: array indexing with non-integer type expression.\n",
-                @3.first_line);
-        } else if ($3->type->primitive != P_INT) {
-            printf("Error tye 12 at Line %d: array indexing with non-integer type expression.\n",
-                @3.first_line);
-        }
-    } else {
-        printf("Error tye 12 at Line %d: array indexing with non-integer type expression.\n",
-            @3.first_line);
-    }
 } | Exp LB Exp error {
     processErrorB("Missing closing bracket ']'", @$.first_line);
 } | Exp DOT ID {
     $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
-    if ($1->type != NULL) {
-        if ($1->type->category != STRUCTURE) {
-            printf("Error type 13 at Line %d: accessing with non-struct variable\n", @1.first_line);
-        }
-    } else {
-        printf("Error type 13 at Line %d: accessing with non-struct variable\n", @1.first_line);
-    }
 } | ID {
     $$ = get_node("Exp", "", @$.first_line, 1, $1);
-    Type* type = symtab_lookup(global_symtab, $1->value);
-    if (type != NULL) {
-        $$->type = type;
-    } else {
-        printf("Error type 1 at Line %d: variable %s is used without definition.\n", @1.first_line, $1->value);
-    }
 } | INT {
     $$ = get_node("Exp", "", @$.first_line, 1, $1);
-    $$->type = $1->type;
 } | FLOAT {
     $$ = get_node("Exp", "", @$.first_line, 1, $1);
-    $$->type = $1->type;
 } | CHAR {
     $$ = get_node("Exp", "", @$.first_line, 1, $1);
-    $$->type = $1->type;
 } | SPECIAL %prec LOWER_THAN_ASSIGN { 
     $$ = NULL;
 } | Exp SPECIAL Exp %prec LOWER_THAN_ASSIGN {
