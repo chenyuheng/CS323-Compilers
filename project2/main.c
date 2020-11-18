@@ -13,6 +13,7 @@ extern int yyrestart(FILE *f);
 Node *root;
 symtab* global_symtab;
 symtab* function_symtab;
+symtab* structure_symtab;
 extern int yylineno;
 
 int main(int argc, char **argv){
@@ -24,6 +25,7 @@ int main(int argc, char **argv){
     else if(argc == 2){
         global_symtab = symtab_init();
         function_symtab = symtab_init();
+        structure_symtab = symtab_init();
         FILE *f = fopen(argv[1], "r");
         if(!f){
             perror(argv[1]);
@@ -42,15 +44,15 @@ int main(int argc, char **argv){
         //         break;
         //     }
         // }        
-        function_symtab = function_symtab->next;
-        while (1) {
-            printf("%s: ", function_symtab->entry.key);
-            print_type(function_symtab->entry.value, 1);
-            function_symtab = function_symtab->next;
-            if (function_symtab == NULL) {
-                break;
-            }
-        }
+        // function_symtab = function_symtab->next;
+        // while (1) {
+        //     printf("%s: ", function_symtab->entry.key);
+        //     print_type(function_symtab->entry.value, 1);
+        //     function_symtab = function_symtab->next;
+        //     if (function_symtab == NULL) {
+        //         break;
+        //     }
+        // }
         return EXIT_OK;
     }
     else{

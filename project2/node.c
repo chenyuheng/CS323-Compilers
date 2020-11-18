@@ -68,10 +68,38 @@ Type* get_primitive_type(char* type_str) {
 	return type;
 }
 
-Type* get_structure_type(char* name) {
+Type* get_structure_type(Node* root) {
+	printf("starts\n");
 	Type* type = (Type*)malloc(sizeof(Type));
 	type->category = STRUCTURE;
-	strcpy(type->name, name);
+	strcpy(type->name, root->children[1]->value);
+	FieldList* currentField = (FieldList*)malloc(sizeof(FieldList));
+	type->structure = currentField;
+	Node* DefList = root->children[3];
+	while (1) {
+		printf("ddd\n");
+
+		Node* Def = DefList->children[0];
+		Node* DecList = Def->children[1];
+		Node* Dec = DecList->children[0];
+		strcpy(currentField->name, Dec->value);
+		currentField->type = Dec->type;
+		currentField->next = (FieldList*)malloc(sizeof(FieldList));
+		currentField = currentField->next;
+		if (DecList->children_num != 2) {
+			break;
+		}
+		DefList = DefList->children[1];
+	}
+	currentField = type->structure;
+	while (1) {
+		if (currentField->next->type == NULL) {
+			currentField->next = NULL;
+			break;
+		}
+		currentField = currentField->next;
+	}
+	printf("ends\n");
 	return type;
 }
 
@@ -159,6 +187,7 @@ void processDef(Node* root) {
 		Node* VarDec = Dec->children[0];
 		Dec->type = getVarDecType(VarDec, base_type);
 		Node* varId = getVarDecId(VarDec);
+		strcpy(Dec->value, varId->value);
 		int insertion = symtab_insert(global_symtab, varId->value, Dec->type);
         if (insertion == -1) {
             printf("Error type 3 at Line %d: variable %s is redefined in the same scope.\n",
@@ -253,7 +282,15 @@ void print_type(Type* type, int is_end) {
 		if (type->primitive == P_FLOAT) printf("float");
 		if (type->primitive == P_CHAR) printf("char");
 	} else if (type->category == STRUCTURE) {
-		printf("struct %s", type->name);
+		printf("struct %s: [", type->name);
+		FieldList* currentField = type->structure;
+		while (currentField) {
+			printf("%s: ", currentField->name);
+			print_type(currentField->type, 0);
+			printf(", ");
+			currentField = currentField->next;
+		}
+		printf("]");
 	} else if (type->category == ARRAY) {
 		print_type(type->array->base, 0);
 		printf("[%d]", type->array->size);

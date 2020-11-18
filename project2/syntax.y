@@ -6,6 +6,7 @@
     extern Node* root;
     extern symtab* global_symtab;
     extern symtab* function_symtab;
+    extern symtab* structure_symtab;
     Type* return_type;
 
     void processErrorB(char* cause, int lineno) {
@@ -102,12 +103,13 @@ Specifier: TYPE {
 };
 StructSpecifier: STRUCT ID LC DefList RC {
     $$ = get_node("StructSpecifier", "", @$.first_line, 5, $1, $2, $3, $4, $5);
-    $$->type = get_structure_type($2->value);
+    $$->type = get_structure_type($$);
+    symtab_insert(structure_symtab, $2->value, $$->type);
 } | STRUCT ID LC DefList error {
     processErrorB("Missing closing curly brace '}'", @$.first_line);
 } | STRUCT ID {
     $$ = get_node("StructSpecifier", "", @$.first_line, 2, $1, $2);
-    $$->type = get_structure_type($2->value);
+    $$->type = symtab_lookup(structure_symtab, $2->value);
 };
 
 /* declarator */
@@ -297,6 +299,9 @@ Exp: Exp ASSIGN Exp {
             printf("Error type 10 at Line %d: applying indexing operator on non-array type variable.\n",
                 @1.first_line);
         }
+    } else {
+        printf("Error type 10 at Line %d: applying indexing operator on non-array type variable.\n",
+                @1.first_line);
     }
     if ($3->type != NULL) {
         if ($3->type->category != PRIMITIVE) {
@@ -306,11 +311,21 @@ Exp: Exp ASSIGN Exp {
             printf("Error tye 12 at Line %d: array indexing with non-integer type expression.\n",
                 @3.first_line);
         }
+    } else {
+        printf("Error tye 12 at Line %d: array indexing with non-integer type expression.\n",
+            @3.first_line);
     }
 } | Exp LB Exp error {
     processErrorB("Missing closing bracket ']'", @$.first_line);
 } | Exp DOT ID {
     $$ = get_node("Exp", "", @$.first_line, 3, $1, $2, $3);
+    if ($1->type != NULL) {
+        if ($1->type->category != STRUCTURE) {
+            printf("Error type 13 at Line %d: accessing with non-struct variable\n", @1.first_line);
+        }
+    } else {
+        printf("Error type 13 at Line %d: accessing with non-struct variable\n", @1.first_line);
+    }
 } | ID {
     $$ = get_node("Exp", "", @$.first_line, 1, $1);
     Type* type = symtab_lookup(global_symtab, $1->value);

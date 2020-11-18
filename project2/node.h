@@ -47,7 +47,7 @@ typedef struct FieldList {
 Node* get_node(char *type_str, char *value, int line_num, int children_num, ...);
 void print_tree(Node* root, int height);
 Type* get_primitive_type(char* primitive_type);
-Type* get_structure_type(char* name);
+Type* get_structure_type(Node* root);
 void processExtDefVar(Node* root);
 void processExtDefFun(Node* root);
 Node* getVarDecId(Node* VarDec);
