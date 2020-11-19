@@ -7,6 +7,8 @@
     extern symtab* global_symtab;
     extern symtab* function_symtab;
     extern symtab* structure_symtab;
+    extern int max_depth;
+    extern int sp;
     Type* return_type;
 
     void processErrorB(char* cause, int lineno) {

@@ -59,4 +59,6 @@ void processBinaryArithmeticOperation(Node* Exp);
 void processStructSpecifier(Node* StructSpecifier);
 void print_type(Type* type, int is_end);
 int typecmp(Type* t1, Type* t2);
+void completeSymbolTable();
+void traverse(Node* root);
 #endif

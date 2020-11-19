@@ -3,6 +3,8 @@
 extern symtab* global_symtab;
 extern symtab* function_symtab;
 extern symtab* structure_symtab;
+extern symtab** symtab_stack;
+extern int sp;
 /* get a new node. */
 Node* get_node(char *type_str, char *value, int line_num, int children_num, ...) {
 	Node *node = malloc(sizeof(Node));
@@ -184,7 +186,6 @@ void processExtDefFun(Node* root) {
 
 void processStructSpecifier(Node* StructSpecifier) {
 	Type* type = get_structure_type(StructSpecifier);
-	print_type(type, 1);
 	int insertion = symtab_insert(structure_symtab, type->name, type);
 	if (insertion == -1) {
 		printf("Error type 15 at Line %d: redefine the same structure type\n", StructSpecifier->children[1]->line_num);
@@ -298,7 +299,7 @@ void print_type(Type* type, int is_end) {
 		if (type->primitive == P_FLOAT) printf("float");
 		if (type->primitive == P_CHAR) printf("char");
 	} else if (type->category == STRUCTURE) {
-		printf("struct %s: ", type->name);
+		printf("struct %s: {", type->name);
 		if (type->structure != NULL) {
 			FieldList* currentField = type->structure;
 			while (currentField) {
@@ -308,6 +309,7 @@ void print_type(Type* type, int is_end) {
 				currentField = currentField->next;
 			}
 		}
+		printf("}");
 	} else if (type->category == ARRAY) {
 		print_type(type->array->base, 0);
 		printf("[%d]", type->array->size);
@@ -324,5 +326,201 @@ void print_type(Type* type, int is_end) {
 	}
 	if (is_end) {
 		printf("\n");
+	}
+}
+
+void checkAndSetArrayType(Type* arr) {
+	Type* current_base = arr;
+	while(current_base->array->base->category == ARRAY) {
+		current_base = current_base->array->base;
+	}
+	if (current_base->array->base->category == STRUCTURE) {
+		Type* current_array_type = symtab_lookup(structure_symtab, current_base->array->base->name);
+		if (current_array_type != NULL) {
+			current_base->array->base = current_array_type;
+		} else {
+		printf("not defined structure type\n");
+		}
+	}
+}
+
+void completeSymbolTableVariableNode(symtab* temp_symtab) {
+	Type* current_type = temp_symtab->entry.value;
+	if (current_type->category == STRUCTURE) {
+		Type* struct_type = symtab_lookup(structure_symtab, current_type->name);
+		if (struct_type != NULL) {
+			temp_symtab->entry.value = struct_type;
+		} else {
+			printf("not defined structure type\n");
+		}
+	} else if (current_type->category == ARRAY) {
+		checkAndSetArrayType(current_type);
+	}
+}
+
+void checkFieldlist(FieldList* start_point) {
+	FieldList* current_fieldlist = start_point;
+	while (current_fieldlist != NULL) {
+		if (current_fieldlist->type->category == STRUCTURE) {
+			Type* field_type = symtab_lookup(structure_symtab, current_fieldlist->type->name);
+			if (field_type != NULL) { 
+				current_fieldlist->type = field_type;
+			} else {
+				printf("not defined structure type of return\n");
+			}
+		} else if (current_fieldlist->type->category == ARRAY) {
+			checkAndSetArrayType(current_fieldlist->type);
+		}
+		current_fieldlist = current_fieldlist->next;
+	}
+}
+
+void completeSymbolTableFunctionNode(Function* function) {
+	if (function->returnType->category == STRUCTURE) {
+		Type* return_type = symtab_lookup(structure_symtab, function->returnType->name);
+		if (return_type != NULL) {
+			function->returnType = return_type;
+		} else {
+			printf("not defined structure type of return\n");
+		}
+	}
+	checkFieldlist(function->args);
+}
+
+
+void completeSymbolTable() {
+	    symtab* temp_symtab = global_symtab->next;
+        while (temp_symtab != NULL) {
+			completeSymbolTableVariableNode(temp_symtab);
+            temp_symtab = temp_symtab->next;
+        }        
+        temp_symtab = function_symtab->next;
+		while (temp_symtab != NULL) {
+			completeSymbolTableFunctionNode(temp_symtab->entry.value->function);
+			temp_symtab = temp_symtab->next;
+		}
+		temp_symtab = structure_symtab->next;
+		while (temp_symtab != NULL) {
+			checkFieldlist(temp_symtab->entry.value->structure);
+			temp_symtab = temp_symtab->next;
+		}
+}
+
+void pushSymtab() {
+	sp++;
+	symtab_stack[sp] = symtab_init();
+}
+
+int is_int(Type* type) {
+	if (type->category != PRIMITIVE) return 0;
+	return type->primitive == P_INT;
+}
+
+int is_float(Type* type) {
+	if (type->category != PRIMITIVE) return 0;
+	return type->primitive == P_FLOAT;
+}
+
+int is_char(Type* type) {
+	if (type->category != PRIMITIVE) return 0;
+	return type->primitive == P_CHAR;
+}
+
+Type* get_int() {
+	Type* type = (Type*)malloc(sizeof(Type));
+	type->category = PRIMITIVE;
+	type->primitive = P_INT;
+	return type;
+}
+
+Type* get_float() {
+	Type* type = (Type*)malloc(sizeof(Type));
+	type->category = PRIMITIVE;
+	type->primitive = P_FLOAT;
+	return type;
+}
+
+Type* get_char() {
+	Type* type = (Type*)malloc(sizeof(Type));
+	type->category = PRIMITIVE;
+	type->primitive = P_CHAR;
+	return type;
+}
+
+int equal_type(Type* t1, Type* t2) {
+	if (t1->category != t2->category) return 0;
+	if (t1->category == PRIMITIVE) {
+		return t1->primitive == t2->primitive;
+	}
+	if (t1->category == ARRAY) {
+		if (t1->array->size != t2->array->size) return 0;
+		return equal_type(t1->array->base, t2->array->base);
+	}
+	if (t1->category == STRUCTURE) {
+		FieldList* f1 = t1->structure;
+		FieldList* f2 = t2->structure;
+		while (1) {
+			if (!equal_type(f1->type, f2->type)) return 0;
+			f1 = f1->next;
+			f2 = f2->next;
+			if (f1 == NULL && f2 == NULL) return 1;
+			if (f1 == NULL || f2 == NULL) return 0;
+		}
+	}
+}
+
+void print_error(int type_num, int line_num, char* msg) {
+	printf("Error type %d at Line %d: %s\n", type_num, line_num, msg);
+}
+
+Type* search_fieldlist(FieldList* f, char* key) {
+	while (f) {
+		if (!strcmp(f->name, key)) return f->type;
+		f = f->next;
+	}
+	return NULL;
+}
+
+void traverse(Node* root) {
+	for (int i = 0; i < root->children_num; i++) {
+		traverse(root->children[i]);
+	}
+	if (!strcmp(root->type_str, "Exp")) {
+		if (root->children_num == 3) {
+			// 分为两类：Exp op Exp 与其他
+			if (!strcmp(root->children[0]->type_str,'Exp')) {
+				Node* e1 = root->children[0];
+				Node* op = root->children[1];
+				Node* e2 = root->children[2];
+				if(e1->type == NULL || e2->type == NULL) return;
+				if (!strcmp(op->type_str, "ASSIGN")) {
+					if (!equal_type(e1->type, e2->type)) {
+						print_error(5, e1->line_num, " unmatching type on both sides of assignment");
+						return;
+					}
+					root->type = e1->type;
+				} else if (!strcmp(op->type_str, "DOT")) {
+					if (e1->type->category != STRUCTURE) {
+						print_error(13, e1->line_num, "accessing with non-struct variable");
+						return;
+					}
+					Type* new_type = search_fieldlist(e1->type->structure, e2->value);
+					if (new_type == NULL) {
+						print_error(14, e1->line_num, "no such member");
+						return;
+					}
+					root->type = new_type;
+				} else if (!strcmp(op->type_str, "AND") || !strcmp(op->type_str, "OR")) {
+					if (!is_int(e1->type) || !is_int(e2->type)) {
+						printf("break assumption 2\n");
+					}
+					root->type = get_int();
+				} else if (!strcmp(op->type_str, "")) {
+					
+				}
+			} else {
+
+			}
+		}
 	}
 }

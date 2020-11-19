@@ -37,4 +37,6 @@ VAL_T symtab_lookup(symtab*, char*);
 // if remove success, return 1, otherwise 0
 int symtab_remove(symtab*, char*);
 
+VAL_T symtab_stack_look(symtab**, int, char*);
+
 #endif  /* SYMTAB_H */
