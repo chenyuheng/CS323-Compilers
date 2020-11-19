@@ -76,14 +76,16 @@ ExtDefList: ExtDef ExtDefList {
 };
 ExtDef: Specifier ExtDecList SEMI {
     $$ = get_node("ExtDef", "", @$.first_line, 3, $1, $2, $3);
+    processExtDefVar($$);
 } | Specifier SEMI {
     $$ = get_node("ExtDef", "", @$.first_line, 2, $1, $2);
 } | Specifier ExtDecList error {
     processErrorB("Missing semicolon ';'", @$.first_line);
 } | Specifier error {
     processErrorB("Missing semicolon ';'", @$.first_line);
-} | Specifier FunDec { return_type = $1->type; } CompSt {
-    $$ = get_node("ExtDef", "", @$.first_line, 3, $1, $2, $4);
+} | Specifier FunDec CompSt {
+    $$ = get_node("ExtDef", "", @$.first_line, 3, $1, $2, $3);
+    processExtDefFun($$);
 };
 ExtDecList: VarDec {
     $$ = get_node("ExtDecList", "", @$.first_line, 1, $1);
@@ -94,15 +96,21 @@ ExtDecList: VarDec {
 /* specifier */
 Specifier: TYPE {
     $$ = get_node("Specifier", "", @$.first_line, 1, $1);
+    $$->type = $1->type;
 } | StructSpecifier {
     $$ = get_node("Specifier", "", @$.first_line, 1, $1);
+    $$->type = $1->type;
 };
 StructSpecifier: STRUCT ID LC DefList RC {
     $$ = get_node("StructSpecifier", "", @$.first_line, 5, $1, $2, $3, $4, $5);
+    processStructSpecifier($$);
 } | STRUCT ID LC DefList error {
     processErrorB("Missing closing curly brace '}'", @$.first_line);
 } | STRUCT ID {
     $$ = get_node("StructSpecifier", "", @$.first_line, 2, $1, $2);
+    $$->type = (Type*)malloc(sizeof(Type));
+    $$->type->category = STRUCTURE;
+    strcpy($$->type->name, $2->value);
 };
 
 /* declarator */

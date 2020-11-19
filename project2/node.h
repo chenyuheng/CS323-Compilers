@@ -48,12 +48,15 @@ Node* get_node(char *type_str, char *value, int line_num, int children_num, ...)
 void print_tree(Node* root, int height);
 Type* get_primitive_type(char* primitive_type);
 Type* get_structure_type(Node* root);
+Type* getVarDecType(Node* VarDec, Type* base_type);
+Node* getVarDecId(Node* VarDec);
 void processExtDefVar(Node* root);
 void processExtDefFun(Node* root);
 Node* getVarDecId(Node* VarDec);
 void processDef(Node* root);
 void processVarList(Node* VarList);
 void processBinaryArithmeticOperation(Node* Exp);
+void processStructSpecifier(Node* StructSpecifier);
 void print_type(Type* type, int is_end);
 int typecmp(Type* t1, Type* t2);
 #endif

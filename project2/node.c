@@ -2,6 +2,7 @@
 #include"symtab.h"
 extern symtab* global_symtab;
 extern symtab* function_symtab;
+extern symtab* structure_symtab;
 /* get a new node. */
 Node* get_node(char *type_str, char *value, int line_num, int children_num, ...) {
 	Node *node = malloc(sizeof(Node));
@@ -69,7 +70,6 @@ Type* get_primitive_type(char* type_str) {
 }
 
 Type* get_structure_type(Node* root) {
-	printf("starts\n");
 	Type* type = (Type*)malloc(sizeof(Type));
 	type->category = STRUCTURE;
 	strcpy(type->name, root->children[1]->value);
@@ -77,17 +77,21 @@ Type* get_structure_type(Node* root) {
 	type->structure = currentField;
 	Node* DefList = root->children[3];
 	while (1) {
-		printf("ddd\n");
-
+		if (DefList == NULL) {
+			break;
+		}
 		Node* Def = DefList->children[0];
 		Node* DecList = Def->children[1];
-		Node* Dec = DecList->children[0];
-		strcpy(currentField->name, Dec->value);
-		currentField->type = Dec->type;
-		currentField->next = (FieldList*)malloc(sizeof(FieldList));
-		currentField = currentField->next;
-		if (DecList->children_num != 2) {
-			break;
+		while (1) {
+			Node* Dec = DecList->children[0];
+			strcpy(currentField->name, getVarDecId(Dec->children[0])->value);
+			currentField->type = getVarDecType(Dec->children[0], Def->children[0]->type);
+			currentField->next = (FieldList*)malloc(sizeof(FieldList));
+			currentField = currentField->next;
+			if (DecList->children_num == 1) {
+				break;
+			}
+			DecList = DecList->children[2];
 		}
 		DefList = DefList->children[1];
 	}
@@ -99,7 +103,6 @@ Type* get_structure_type(Node* root) {
 		}
 		currentField = currentField->next;
 	}
-	printf("ends\n");
 	return type;
 }
 
@@ -167,7 +170,7 @@ void processExtDefFun(Node* root) {
 	while (1) {
 		Node* ParamDec = VarList->children[0];
 		strcpy(currentField->name, getVarDecId(ParamDec->children[1])->value);
-		currentField->type = ParamDec->children[0]->type;
+		currentField->type = getVarDecType(ParamDec->children[1], ParamDec->children[0]->type);
 		if (VarList->children_num == 1) {
 			break;
 		}
@@ -177,6 +180,16 @@ void processExtDefFun(Node* root) {
 		currentField = nextField;
 	}
 	symtab_insert(function_symtab, ID->value, type);
+}
+
+void processStructSpecifier(Node* StructSpecifier) {
+	Type* type = get_structure_type(StructSpecifier);
+	print_type(type, 1);
+	int insertion = symtab_insert(structure_symtab, type->name, type);
+	if (insertion == -1) {
+		printf("Error type 15 at Line %d: redefine the same structure type\n", StructSpecifier->children[1]->line_num);
+	}
+	StructSpecifier->type = type;
 }
 
 void processDef(Node* root) {
@@ -277,20 +290,24 @@ int typecmp(Type* t1, Type* t2) {
 }
 
 void print_type(Type* type, int is_end) {
+	if (type == NULL) {
+		return;
+	}
 	if (type->category == PRIMITIVE) {
 		if (type->primitive == P_INT) printf("int");
 		if (type->primitive == P_FLOAT) printf("float");
 		if (type->primitive == P_CHAR) printf("char");
 	} else if (type->category == STRUCTURE) {
-		printf("struct %s: [", type->name);
-		FieldList* currentField = type->structure;
-		while (currentField) {
-			printf("%s: ", currentField->name);
-			print_type(currentField->type, 0);
-			printf(", ");
-			currentField = currentField->next;
+		printf("struct %s: ", type->name);
+		if (type->structure != NULL) {
+			FieldList* currentField = type->structure;
+			while (currentField) {
+				printf("%s: ", currentField->name);
+				print_type(currentField->type, 0);
+				printf(", ");
+				currentField = currentField->next;
+			}
 		}
-		printf("]");
 	} else if (type->category == ARRAY) {
 		print_type(type->array->base, 0);
 		printf("[%d]", type->array->size);

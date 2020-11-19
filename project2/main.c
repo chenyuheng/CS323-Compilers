@@ -35,24 +35,37 @@ int main(int argc, char **argv){
         yylineno = 1;
         yyrestart(f);
         yyparse();
-        // global_symtab = global_symtab->next;
-        // while (1) {
-        //     printf("%s: ", global_symtab->entry.key);
-        //     print_type(global_symtab->entry.value, 1);
-        //     global_symtab = global_symtab->next;
-        //     if (global_symtab == NULL) {
-        //         break;
-        //     }
-        // }        
-        // function_symtab = function_symtab->next;
-        // while (1) {
-        //     printf("%s: ", function_symtab->entry.key);
-        //     print_type(function_symtab->entry.value, 1);
-        //     function_symtab = function_symtab->next;
-        //     if (function_symtab == NULL) {
-        //         break;
-        //     }
-        // }
+        global_symtab = global_symtab->next;
+        while (global_symtab != NULL) {
+            printf("%s: ", global_symtab->entry.key);
+            print_type(global_symtab->entry.value, 1);
+            global_symtab = global_symtab->next;
+            if (global_symtab == NULL) {
+                break;
+            }
+        }        
+
+        function_symtab = function_symtab->next;
+        while (1) {
+            printf("%s: ", function_symtab->entry.key);
+            print_type(function_symtab->entry.value, 1);
+            function_symtab = function_symtab->next;
+            if (function_symtab == NULL) {
+                break;
+            }
+        }
+        structure_symtab = structure_symtab->next;
+        while (1) {
+            if (structure_symtab->entry.value == NULL) {
+                break;
+            }
+            printf("%s: ", structure_symtab->entry.key);
+            print_type(structure_symtab->entry.value, 1);
+            structure_symtab = structure_symtab->next;
+            if (structure_symtab == NULL) {
+                break;
+            }
+        }
         return EXIT_OK;
     }
     else{
