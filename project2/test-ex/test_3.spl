@@ -1,0 +1,27 @@
+struct Node {
+    int a;
+    float b;
+    char c;
+};
+
+struct node {
+    int x;
+    float y;
+    char z;
+};
+
+struct fake_node {
+    float o;
+    int p;
+    char z;
+};
+
+struct node get_node() {
+    struct Node n;
+    return n;
+}
+
+struct fake_node get_fake_node() {
+    struct node n;
+    return n;
+}

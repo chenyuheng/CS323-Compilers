@@ -1,0 +1,12 @@
+struct Node {
+    int key;
+    int value;
+    struct Node next;
+};
+
+int main(){
+    struct Node node;
+    node.key = 0;
+    node.value = 2;
+    node.key + 1 = 2;
+}

@@ -1,0 +1,9 @@
+int t;
+
+int main() {
+    t = get_div(1, 0);
+}
+
+int get_div(float a, float b) {
+    return a/b;
+}

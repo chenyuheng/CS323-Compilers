@@ -13,6 +13,10 @@ extern int yyrestart(FILE *f);
 Node *root;
 symtab* global_symtab;
 symtab* function_symtab;
+symtab* structure_symtab;
+symtab** symtab_stack;
+int max_depth;
+int sp;
 extern int yylineno;
 
 int main(int argc, char **argv){
@@ -24,6 +28,9 @@ int main(int argc, char **argv){
     else if(argc == 2){
         global_symtab = symtab_init();
         function_symtab = symtab_init();
+        structure_symtab = symtab_init();
+        max_depth = 0;
+        sp = 0;
         FILE *f = fopen(argv[1], "r");
         if(!f){
             perror(argv[1]);
@@ -33,24 +40,45 @@ int main(int argc, char **argv){
         yylineno = 1;
         yyrestart(f);
         yyparse();
+        completeSymbolTable();
+        symtab_stack = (symtab**)malloc(sizeof(symtab*) * 1000);
+        symtab_stack[0] = global_symtab;
+        traverse(root, 0);
+        // printf("global variables:\n");
         // global_symtab = global_symtab->next;
-        // while (1) {
+        // while (global_symtab != NULL) {
         //     printf("%s: ", global_symtab->entry.key);
         //     print_type(global_symtab->entry.value, 1);
         //     global_symtab = global_symtab->next;
         //     if (global_symtab == NULL) {
         //         break;
         //     }
-        // }        
-        function_symtab = function_symtab->next;
-        while (1) {
-            printf("%s: ", function_symtab->entry.key);
-            print_type(function_symtab->entry.value, 1);
-            function_symtab = function_symtab->next;
-            if (function_symtab == NULL) {
-                break;
-            }
-        }
+        // }                
+        // printf("-----------\nfunctions:\n");
+        // function_symtab = function_symtab->next;
+        // while (function_symtab != NULL) {
+        //     printf("function: ");
+        //     print_type(function_symtab->entry.value, 1);
+        //     function_symtab = function_symtab->next;
+        //     if (function_symtab == NULL) {
+        //         break;
+        //     }
+        //}       
+        // printf("-----------\nstructures:\n");
+
+        // structure_symtab = structure_symtab->next;
+        // while (structure_symtab != NULL) {
+        //     if (structure_symtab->entry.value == NULL) {
+        //         break;
+        //     }
+        //     printf("%s: ", structure_symtab->entry.key);
+        //     print_type(structure_symtab->entry.value, 1);
+        //     structure_symtab = structure_symtab->next;
+        //     if (structure_symtab == NULL) {
+        //         break;
+        //     }
+        // }
+        // printf("%d\n", max_depth);
         return EXIT_OK;
     }
     else{

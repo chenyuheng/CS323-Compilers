@@ -1,0 +1,3 @@
+Error type 9 at Line 4: invalid argument for function, type(s) not compatible
+Error type 5 at Line 4: unmatching type on both sides of assignment
+Error type 8 at Line 8: incompatiable return type

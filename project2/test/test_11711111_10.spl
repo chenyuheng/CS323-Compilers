@@ -1,0 +1,9 @@
+struct Node {
+    int t;
+} a;
+
+struct Node b;
+
+struct Node main(){
+	return b;
+}

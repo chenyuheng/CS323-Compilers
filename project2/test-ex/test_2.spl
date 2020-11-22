@@ -1,0 +1,18 @@
+struct String {
+    char arr[1024];
+};
+
+struct Array {
+    char name[1024];
+    struct String arr_of_string[1024];
+};
+
+struct String get_string_from_arr_struct(struct Array arr, int index) {
+    return arr.arr_of_string[index];
+} 
+
+int main(){
+    struct Array arr;
+    struct String str = get_string_from_arr_struct(arr, 2);
+    return 1;
+}

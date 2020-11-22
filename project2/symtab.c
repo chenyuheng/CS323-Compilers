@@ -57,3 +57,14 @@ int symtab_remove(symtab *self, char *key){
     }
     return 0;
 }
+
+VAL_T symtab_stack_look(symtab** symtab_stack, int sp, char* key) {
+    while (sp >= 0) {
+        VAL_T r = symtab_lookup(symtab_stack[sp], key);
+        if (r != NULL) {
+            return r;
+        }
+        sp--;
+    }
+    return NULL;
+}
