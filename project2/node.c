@@ -308,7 +308,9 @@ void print_type(Type* type, int is_end) {
 			FieldList* currentField = type->structure;
 			while (currentField) {
 				printf("%s: ", currentField->name);
-				print_type(currentField->type, 0);
+				if (!equal_type(currentField->type, type)) {
+					print_type(currentField->type, 0);
+				}
 				printf(", ");
 				currentField = currentField->next;
 			}
@@ -725,6 +727,12 @@ void processDef(Node* Def) {
 			print_error(3, varId->line_num, VarDec->children[0]->value);
         } else {
 			// printf("inserted %s in stack %d\n", varId->value, sp);
+		}
+		if (DecList->children[0]->children_num == 3) {
+			Node* Exp = DecList->children[0]->children[2];
+			if (!equal_type(Exp->type, base_type)) {
+				print_error(7, Exp->line_num, "");
+			}
 		}
 		if (DecList->children_num == 1) {
             break;

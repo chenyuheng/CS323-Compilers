@@ -63,4 +63,5 @@ int typecmp(Type* t1, Type* t2);
 void completeSymbolTable();
 void traverse(Node* root, int d);
 void print_error(int type_num, int line_num, char* msg);
+int equal_type(Type* t1, Type* t2);
 #endif
