@@ -1,1 +1,22 @@
 int a;
+
+struct Node {
+	int a;
+	int b;
+};
+
+int main() {
+    int a = 0;
+    int b = 1;
+    if (1) {
+        int a = 0;
+        while (2) {
+            int a = 0;
+            if (3) {
+                a = 0;
+            } else {
+                a = 3;
+            }
+        }
+    }
+}

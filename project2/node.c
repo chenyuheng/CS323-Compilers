@@ -175,6 +175,9 @@ void processExtDefFun(Node* root) {
 		strcpy(currentField->name, getVarDecId(ParamDec->children[1])->value);
 		function->args_num++;
 		currentField->type = getVarDecType(ParamDec->children[1], ParamDec->children[0]->type);
+		// printf("%s:\n", FunDec->children[0]->value);
+		// print_type(ParamDec->children[0]->type, 1);
+		// print_type(currentField->type, 1);
 		if (VarList->children_num == 1) {
 			break;
 		}
@@ -308,9 +311,9 @@ void print_type(Type* type, int is_end) {
 			FieldList* currentField = type->structure;
 			while (currentField) {
 				printf("%s: ", currentField->name);
-				if (!equal_type(currentField->type, type)) {
-					print_type(currentField->type, 0);
-				}
+				// if (!equal_type(currentField->type, type)) {
+				// 	print_type(currentField->type, 0);
+				// }
 				printf(", ");
 				currentField = currentField->next;
 			}
@@ -464,6 +467,7 @@ Type* get_result_type(Type* t1, Type* t2) {
 }
 
 int equal_type(Type* t1, Type* t2) {
+	if (t1 == NULL || t2 == NULL) return 0;
 	if (t1->category != t2->category) return 0;
 	if (t1->category == PRIMITIVE) {
 		return t1->primitive == t2->primitive;
@@ -476,7 +480,11 @@ int equal_type(Type* t1, Type* t2) {
 		FieldList* f1 = t1->structure;
 		FieldList* f2 = t2->structure;
 		while (1) {
-			if (!equal_type(f1->type, f2->type)) return 0;
+			if (f1->type->category != STRUCTURE) {
+				if (!equal_type(f1->type, f2->type)) return 0;
+			} else if (strcmp(f1->type->name, f2->type->name)) {
+				return 0;
+			}
 			f1 = f1->next;
 			f2 = f2->next;
 			if (f1 == NULL && f2 == NULL) return 1;
@@ -658,7 +666,7 @@ void traverse_Exp(Node* root) {
 					|| !strcmp(op->type_str, "GT") || !strcmp(op->type_str, "GE")
 					|| !strcmp(op->type_str, "NE") || !strcmp(op->type_str, "EQ")) {
 				if (!is_number(e1->type) || !is_number(e2->type)) {
-					print_error(7, e1->line_num, "!!!");
+					print_error(7, e1->line_num, "");
 					return;
 				}
 				root->type = get_int();
@@ -707,6 +715,14 @@ void traverse_Exp(Node* root) {
 				print_error(1, root->line_num, root->children[0]->value);
 				return;
 			}
+			if (result_type->category == STRUCTURE) {
+				Type* structure_type = symtab_lookup(structure_symtab, result_type->name);
+				if (structure_type == NULL) {
+					printf("Undefined structure type at line %d\n", root->line_num);
+				} else {
+					result_type->structure = structure_type->structure;
+				}
+			}
 			root->type = result_type;
 		} else {
 			root->type = root->children[0]->type;
@@ -726,12 +742,12 @@ void processDef(Node* Def) {
         if (insertion == -1) {
 			print_error(3, varId->line_num, VarDec->children[0]->value);
         } else {
-			// printf("inserted %s in stack %d\n", varId->value, sp);
+			//printf("inserted %s in stack %d\n", varId->value, sp);
 		}
 		if (DecList->children[0]->children_num == 3) {
 			Node* Exp = DecList->children[0]->children[2];
-			if (!equal_type(Exp->type, base_type)) {
-				print_error(7, Exp->line_num, "");
+			if (!equal_type(Exp->type, VarDec->type)) {
+				print_error(5, Exp->line_num, "");
 			}
 		}
 		if (DecList->children_num == 1) {
@@ -780,6 +796,11 @@ void processSpecifier(Node* Specifier) {
 
 void traverse(Node* root, int d) {
 	if (root == NULL) return;
+	// int dd = d;
+	// while (dd--) {
+	// 	printf("  ");
+	// }
+	// printf("%s (%d)\n", root->type_str, root->line_num);
 	if (!strcmp(root->type_str, "FunDec")) {
 		symtab_stack[++sp] = symtab_init();
 		func_flag = 1;
@@ -787,11 +808,7 @@ void traverse(Node* root, int d) {
 		Type* function_type = symtab_lookup(function_symtab, root->children[0]->value);
 		current_return_type = function_type->function->returnType;
 	}
-	// int dd = d;
-	// while (dd--) {
-	// 	printf("  ");
-	// }
-	// printf("%s (%d)\n", root->type_str, root->line_num);
+
 	if (!strcmp(root->type_str, "StructSpecifier") || !strcmp(root->type_str, "CompSt")) {
 		if (!func_flag) {
 			symtab_stack[++sp] = symtab_init();
@@ -804,6 +821,7 @@ void traverse(Node* root, int d) {
 		traverse(root->children[i], d+1);
 	}
 	if (!strcmp(root->type_str, "StructSpecifier") || !strcmp(root->type_str, "CompSt")) {
+		symtab_stack[sp] = NULL;
 		sp--;
 		//printf("end %d\n", sp--);
 	}

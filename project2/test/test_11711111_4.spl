@@ -1,0 +1,11 @@
+struct node {
+    int value;
+    struct node next;
+};
+int main() {
+    struct node n;
+    struct node n1 = n.next.next;
+    int a = n1.next;
+    struct node t = n1.previous;
+    return a.next;
+}
