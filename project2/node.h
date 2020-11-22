@@ -33,6 +33,7 @@ typedef struct Array {
 
 typedef struct Function {
 	char name[32];
+	int args_num;
 	struct Type* returnType;
 	struct FieldList* args;
 } Function;
@@ -60,5 +61,6 @@ void processStructSpecifier(Node* StructSpecifier);
 void print_type(Type* type, int is_end);
 int typecmp(Type* t1, Type* t2);
 void completeSymbolTable();
-void traverse(Node* root);
+void traverse(Node* root, int d);
+void print_error(int type_num, int line_num, char* msg);
 #endif
