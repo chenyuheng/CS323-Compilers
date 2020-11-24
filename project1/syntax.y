@@ -135,8 +135,6 @@ CompSt: LC DefList StmtList RC {
     processErrorB("Missing specifier", @3.first_line);
 } | LC DefList StmtList error {
     processErrorB("Missing closing curly brace '}'", @$.first_line);
-} | LC RC {
-    processErrorB("Missing statements in composition set.", @$.first_line);
 };
 StmtList: Stmt StmtList {
     $$ = get_node("StmtList", "", @$.first_line, 2, $1, $2);
