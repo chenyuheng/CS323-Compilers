@@ -17,6 +17,10 @@ Coursework of SUSTech CS323-Compilers (2020fall)
 | Lab8 | Nov.3 | JSON key checker | There is a *quiz* in the lab! |
 | Lab9 | Nov.10 | | |
 | Lab10 | Nov.17 | | Project 3 release (due: Dec.13) |
+| Lab11 | Nov.24 | | |
+| Lab12 | Dec.1 | Binary exploitation on Linux | |
+| Lab13 | Dec.8 | | Project4 release (due: Jan.8, 2021) |
+| Lab14 | Dec.15 | | |
 
 + The bold contents are theoretical sessions
 
