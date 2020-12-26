@@ -17,6 +17,7 @@ symtab* structure_symtab;
 symtab** symtab_stack;
 int max_depth;
 int sp;
+int unique_counter;
 extern int yylineno;
 
 int main(int argc, char **argv){
@@ -29,8 +30,26 @@ int main(int argc, char **argv){
         global_symtab = symtab_init();
         function_symtab = symtab_init();
         structure_symtab = symtab_init();
+        Type* read_function = (Type*)malloc(sizeof(Type));
+        read_function->category = FUNCTION;
+        Function* read_function_function = (Function*)malloc(sizeof(Function));
+        read_function_function->returnType = get_primitive_type("int");
+        read_function_function->args_num = 0;
+        read_function->function = read_function_function;
+        Type* write_function = (Type*)malloc(sizeof(Type));
+        write_function->category = FUNCTION;
+        Function* write_function_function = (Function*)malloc(sizeof(Function));
+        write_function_function->returnType = get_primitive_type("int");
+        write_function_function->args_num = 1;
+        FieldList* to_write = (FieldList*)malloc(sizeof(FieldList));
+        to_write->type = get_primitive_type("int");
+        write_function_function->args = to_write;
+        write_function->function = write_function_function;
+        symtab_insert(function_symtab, "read", read_function);
+        symtab_insert(function_symtab, "write", write_function);
         max_depth = 0;
         sp = 0;
+        unique_counter = 0;
         FILE *f = fopen(argv[1], "r");
         if(!f){
             perror(argv[1]);
@@ -43,7 +62,9 @@ int main(int argc, char **argv){
         completeSymbolTable();
         symtab_stack = (symtab**)malloc(sizeof(symtab*) * 1000);
         symtab_stack[0] = global_symtab;
-        traverse(root, 0);
+        traverse(root, 0); // for semantic checking
+        char* code = translate_Node(root, 0);
+        printf("%s", code);
         // printf("global variables:\n");
         // global_symtab = global_symtab->next;
         // while (global_symtab != NULL) {

@@ -64,4 +64,12 @@ void completeSymbolTable();
 void traverse(Node* root, int d);
 void print_error(int type_num, int line_num, char* msg);
 int equal_type(Type* t1, Type* t2);
+
+char* new_place();
+char* new_label();
+char* translate_Node(Node* node, int l);
+char* translate_Exp(Node* Exp, char* place);
+char* translate_Stmt(Node* Stmt);
+char* translate_Dec(Node* Dec);
+
 #endif

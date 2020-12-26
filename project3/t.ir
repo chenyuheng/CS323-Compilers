@@ -1,0 +1,10 @@
+FUNCTION main :
+READ temp1
+vara := temp1
+temp0 := vara
+temp4 := vara
+temp5 := #2
+temp3 := temp4 * temp5
+WRITE temp3
+temp6 := #0
+RETURN temp6

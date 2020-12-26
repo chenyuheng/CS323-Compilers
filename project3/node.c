@@ -5,6 +5,7 @@ extern symtab* function_symtab;
 extern symtab* structure_symtab;
 extern symtab** symtab_stack;
 extern int sp;
+extern int unique_counter;
 /* get a new node. */
 Node* get_node(char *type_str, char *value, int line_num, int children_num, ...) {
 	Node *node = malloc(sizeof(Node));
@@ -835,5 +836,155 @@ void traverse(Node* root, int d) {
 		traverse_Stmt(root);
 	} else if (!strcmp(root->type_str, "Specifier")) {
 		processSpecifier(root);
+	}
+}
+
+char* new_place() {
+	char* str = (char*)malloc(20*sizeof(char));
+	sprintf(str, "temp%d", unique_counter++);
+	return str;
+}
+
+char* new_label() {
+	char* str = (char*)malloc(20*sizeof(char));
+	sprintf(str, "lab%d", unique_counter++);
+	return str;
+}
+
+char* translate_Node(Node* node, int l) {
+	char** codes = (char**)malloc((node->children_num) * sizeof(char**) + 8);
+	int size = 0;
+			//printf("%s: %d(%d)\n", node->type_str, node->children_num, node->line_num);
+	for (int i = 0; i < node->children_num; i++) {
+		if (!strcmp(node->children[i]->type_str, "Exp")) {
+			codes[i] = 
+			translate_Exp(node->children[i], new_place());
+		} else if (!strcmp(node->children[i]->type_str, "Stmt")) {
+			codes[i] = translate_Stmt(node->children[i]);
+		} else if (!strcmp(node->children[i]->type_str, "Dec") && node->children[i]->children_num == 3) {
+			codes[i] = translate_Dec(node->children[i]);
+		} else {
+			codes[i] =
+			 translate_Node(node->children[i], l + 1);
+		}
+		size += strlen(codes[i]);
+	}
+	char* tac = (char*)malloc(size + 100);
+	if (!strcmp(node->type_str, "ExtDef")) {
+		if (node->children_num == 3) {
+			if(!strcmp(node->children[1]->type_str, "FunDec")) {
+				sprintf(tac, "FUNCTION %s :\n", node->children[1]->children[0]->value);
+			}
+		}
+	}
+	for (int i = 0; i < node->children_num; i++) {
+		if (codes[i][0] == '\0') {
+			continue;
+		}
+		strcat(tac, codes[i]);
+	}
+	return tac;
+}
+
+
+char* translate_Exp(Node* Exp, char* place) {
+	if (Exp->children_num == 1) {
+		if (!strcmp(Exp->children[0]->type_str, "INT")) {
+			char* tac = (char*)malloc(1<<7);
+			sprintf(tac, "%s := #%s\n", place, Exp->children[0]->value);
+			return tac;
+		} else if (!strcmp(Exp->children[0]->type_str, "ID")) {
+			char* tac = (char*)malloc(1<<7);
+			sprintf(tac, "%s := var%s\n", place, Exp->children[0]->value);
+			return tac;
+		}
+	} else if (Exp->children_num == 2) {
+		if (!strcmp(Exp->children[0]->type_str, "MINUS")) {
+			char* tp = new_place();
+			char* code1 = translate_Exp(Exp->children[1], tp);
+			char* code2 = (char*)malloc(strlen(place) + 20);
+			sprintf(code2, "%s := #0 - %s\n", place, tp);
+			char* tac = (char*)malloc(strlen(code1) + strlen(code2) + 30);
+			sprintf(tac, "%s%s", code1, code2);
+			return tac;
+			}
+	} else if (Exp->children_num == 3) {
+		if (!strcmp(Exp->children[1]->type_str, "ASSIGN")) {
+			char* lv = Exp->children[0]->children[0]->value;
+			char* tp = new_place();
+			char* code1 = translate_Exp(Exp->children[2], tp);
+			char* code2 = (char*)malloc(strlen(lv) + 10);
+			sprintf(code2, "var%s := %s\n", lv, tp);
+			char* code3 = (char*)malloc(strlen(lv) + strlen(place) + 10);
+			sprintf(code3, "%s := var%s\n", place, lv);
+			char* tac = (char*)malloc(strlen(code1) + strlen(code2) + strlen(code3) + 10);
+			sprintf(tac, "%s%s%s", code1, code2, code3);
+			return tac;
+		} else if (!strcmp(Exp->children[1]->type_str, "PLUS") || !strcmp(Exp->children[1]->type_str, "MINUS")
+			    || !strcmp(Exp->children[1]->type_str, "MUL") || !strcmp(Exp->children[1]->type_str, "DIV")
+		) {
+			char* t1 = new_place();
+			char* t2 = new_place();
+			char* code1 = translate_Exp(Exp->children[0], t1);
+			char* code2 = translate_Exp(Exp->children[2], t2);
+			char* code3 = (char*)malloc(strlen(place) + 30);
+			char op = '+';
+			if (!strcmp(Exp->children[1]->type_str, "MINUS")) {
+				op = '-';
+			} else if (!strcmp(Exp->children[1]->type_str, "MUL")) {
+				op = '*';
+			} else if (!strcmp(Exp->children[1]->type_str, "DIV")) {
+				op = '/';
+			} 
+			sprintf(code3, "%s := %s %c %s\n", place, t1, op, t2);
+			char* tac = (char*)malloc(strlen(code1) + strlen(code2) + strlen(code3) + 10);
+			sprintf(tac, "%s%s%s", code1, code2, code3);
+			return tac;
+		} else if (!strcmp(Exp->children[0]->type_str, "ID")) {
+			if (!strcmp(Exp->children[0]->value, "read")) {
+				char* tac = (char*)malloc(30);
+				sprintf(tac, "READ %s\n", place);
+				return tac;
+			} else {
+
+			}
+		}
+	} else if (Exp->children_num == 4) {
+		if (!strcmp(Exp->children[0]->type_str, "ID")) {
+			if (!strcmp(Exp->children[0]->value, "write")) {
+				char* tp = new_place();
+				char* code = translate_Exp(Exp->children[2]->children[0], tp);
+				char* tac = (char*)malloc(strlen(code) + 30);
+				sprintf(tac, "%sWRITE %s\n", code, tp);
+				return tac;
+			}
+		}
+	}
+}
+
+char* translate_Stmt(Node* Stmt) {
+	if (Stmt->children_num == 1) { // CompSet
+		return translate_Node(Stmt->children[0], 10);
+	} else if (Stmt->children_num == 2) {
+		return translate_Exp(Stmt->children[0], new_place());
+	} else if (Stmt->children_num == 3) { // RETURN Exp SEMI
+		char* tp = new_place();
+		char* code = translate_Exp(Stmt->children[1], tp);
+		char* tac = (char*)malloc(strlen(code) + 20);
+		sprintf(tac, "%sRETURN %s\n", code, tp);
+		return tac;
+	}
+}
+
+char* translate_Dec(Node* Dec) {
+	if (Dec->children_num == 3) {
+		char* lv = Dec->children[0]->children[0]->value;
+		char* tp = new_place();
+		char* code1 = translate_Exp(Dec->children[2], tp);
+		char* code2 = (char*)malloc(strlen(lv) + 10);
+		sprintf(code2, "var%s := %s\n", lv, tp);
+		char* tac = (char*)malloc(strlen(code1) + strlen(code2) + 10);
+		sprintf(tac, "%s%s", code1, code2);
+		return tac;
 	}
 }

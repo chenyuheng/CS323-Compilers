@@ -74,7 +74,7 @@ Program: ExtDefList {
 ExtDefList: ExtDef ExtDefList {
     $$ = get_node("ExtDefList", "", @$.first_line, 2, $1, $2);
 } | /* empty */ {
-    $$ = NULL;
+    $$ = get_node("empty", "", @$.first_line, 0);
 };
 ExtDef: Specifier ExtDecList SEMI {
     $$ = get_node("ExtDef", "", @$.first_line, 3, $1, $2, $3);
@@ -152,7 +152,7 @@ CompSt: LC DefList StmtList RC {
 StmtList: Stmt StmtList {
     $$ = get_node("StmtList", "", @$.first_line, 2, $1, $2);
 } | /* empty */ {
-    $$ = NULL;
+    $$ = get_node("empty", "", @$.first_line, 0);
 };
 Stmt: Exp SEMI {
     $$ = get_node("Stmt", "", @$.first_line, 2, $1, $2);
@@ -170,8 +170,6 @@ Stmt: Exp SEMI {
     $$ = get_node("Stmt", "", @$.first_line, 7, $1, $2, $3, $4, $5, $6, $7);
 } | WHILE LP Exp RP Stmt {
     $$ = get_node("Stmt", "", @$.first_line, 5, $1, $2, $3, $4, $5);
-} | FOR LP ExpOrNull SEMI ExpOrNull SEMI ExpOrNull RP Stmt {
-    $$ = get_node("Stmt", "", @$.first_line, 9, $1, $2, $3, $4, $5, $6, $7, $8, $9);
 } | IF LP Exp error Stmt {
     processErrorB("Missing closing parenthesis ')'", @$.first_line);
 } | IF LP Exp error Stmt ELSE Stmt {
@@ -193,13 +191,13 @@ Stmt: Exp SEMI {
 } | FOR LP ExpOrNull error RP Stmt {
     processErrorB("Missing semicolon ';'", @$.first_line);
 };
-;
+
 
 /* local definition */
 DefList: Def DefList {
     $$ = get_node("DefList", "", @$.first_line, 2, $1, $2);
 } | /* empty */ {
-    $$ = NULL;
+    $$ = get_node("empty", "", @$.first_line, 0);
 };
 Def: Specifier DecList SEMI {
     $$ = get_node("Def", "", @$.first_line, 3, $1, $2, $3);
