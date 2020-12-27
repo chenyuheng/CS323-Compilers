@@ -866,7 +866,15 @@ char* translate_Node(Node* node, int l) {
 		}
 		size += strlen(codes[i]);
 	}
-	char* tac = (char*)malloc(size + 1000);
+	if (!strcmp(node->type_str, "ExtDef")) {
+		if (node->children_num == 3) {
+			if(!strcmp(node->children[1]->type_str, "FunDec")) {
+				Type* function_type = symtab_lookup(function_symtab, node->children[1]->children[0]->value);
+				size += function_type->function->args_num * 20;
+			}
+		}
+	}
+	char* tac = (char*)malloc(size + 50);
 	if (!strcmp(node->type_str, "ExtDef")) {
 		if (node->children_num == 3) {
 			if(!strcmp(node->children[1]->type_str, "FunDec")) {
