@@ -918,7 +918,14 @@ char* translate_Exp(Node* Exp, char* place) {
 			char* tac = (char*)malloc(strlen(code1) + strlen(code2) + 30);
 			sprintf(tac, "%s%s", code1, code2);
 			return tac;
-			}
+		} else if (!strcmp(Exp->children[0]->type_str, "NOT")) {
+			char* lb1 = new_label();
+			char* lb2 = new_label();
+			char* code1 = translate_cond_Exp(Exp, lb1, lb2);
+			char* tac = (char*)malloc(strlen(code1) + 100);
+			sprintf(tac, "%s := #0\n%sLABEL %s :\n%s := #1\nLABEL %s :\n", place, code1, lb1, place, lb2);
+			return tac;
+		}
 	} else if (Exp->children_num == 3) {
 		if (!strcmp(Exp->children[1]->type_str, "ASSIGN")) {
 			char* lv = Exp->children[0]->children[0]->value;
