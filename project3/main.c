@@ -20,6 +20,22 @@ int sp;
 int unique_counter;
 extern int yylineno;
 
+void write_code(char* code, char* infile_path) {
+    char* outfile_path = (char*)malloc(strlen(infile_path) + 10);
+    strcpy(outfile_path, infile_path);
+    int length = strlen(outfile_path);
+    outfile_path[length - 3] = 'i';
+    outfile_path[length - 2] = 'r';
+    outfile_path[length - 1] = '\0';
+    FILE* f = fopen(outfile_path, "w");
+    if (!f) {
+        perror(outfile_path);
+        return -1;
+    }
+    fwrite(code, strlen(code), 1, f);
+    fclose(f);    
+}
+
 int main(int argc, char **argv){
     char *file_path;
     if(argc < 2){
@@ -65,6 +81,7 @@ int main(int argc, char **argv){
         traverse(root, 0); // for semantic checking
         char* code = translate_Node(root, 0);
         printf("%s", code);
+        write_code(code, argv[1]);
         // printf("global variables:\n");
         // global_symtab = global_symtab->next;
         // while (global_symtab != NULL) {
