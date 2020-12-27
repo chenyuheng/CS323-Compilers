@@ -33,7 +33,6 @@ int write_code(char* code, char* infile_path) {
         return -1;
     }
     fwrite(code, strlen(code), 1, f);
-    fclose(f);    
     return 0;
 }
 
