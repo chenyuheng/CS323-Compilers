@@ -20,7 +20,7 @@ int sp;
 int unique_counter;
 extern int yylineno;
 
-void write_code(char* code, char* infile_path) {
+int write_code(char* code, char* infile_path) {
     char* outfile_path = (char*)malloc(strlen(infile_path) + 10);
     strcpy(outfile_path, infile_path);
     int length = strlen(outfile_path);
@@ -34,6 +34,7 @@ void write_code(char* code, char* infile_path) {
     }
     fwrite(code, strlen(code), 1, f);
     fclose(f);    
+    return 0;
 }
 
 int main(int argc, char **argv){
