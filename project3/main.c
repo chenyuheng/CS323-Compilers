@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "syntax.tab.h"
+#include <unistd.h>
 
     
 #define EXIT_OK 0
@@ -33,6 +34,7 @@ int write_code(char* code, char* infile_path) {
         return -1;
     }
     fwrite(code, strlen(code), 1, f);
+    fclose(f);
     return 0;
 }
 
@@ -82,6 +84,9 @@ int main(int argc, char **argv){
         char* code = translate_Node(root, 0);
         printf("%s", code);
         write_code(code, argv[1]);
+        printf("writing over\n");
+        execlp("python3", "python3", "op.py", argv[1], NULL);
+
         // printf("global variables:\n");
         // global_symtab = global_symtab->next;
         // while (global_symtab != NULL) {
