@@ -72,5 +72,6 @@ char* translate_Exp(Node* Exp, char* place);
 char* translate_cond_Exp(Node* Exp, char* lb_t, char* lb_f);
 char* translate_Stmt(Node* Stmt);
 char* translate_Dec(Node* Dec);
+char* translate_Args(Node* Args, char** arg_name, int index);
 
 #endif

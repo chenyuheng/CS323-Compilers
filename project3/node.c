@@ -854,7 +854,6 @@ char* new_label() {
 char* translate_Node(Node* node, int l) {
 	char** codes = (char**)malloc((node->children_num) * sizeof(char**) + 8);
 	int size = 0;
-			//printf("%s: %d(%d)\n", node->type_str, node->children_num, node->line_num);
 	for (int i = 0; i < node->children_num; i++) {
 		if (!strcmp(node->children[i]->type_str, "Exp")) {
 			codes[i] = translate_Exp(node->children[i], new_place());
@@ -867,11 +866,17 @@ char* translate_Node(Node* node, int l) {
 		}
 		size += strlen(codes[i]);
 	}
-	char* tac = (char*)malloc(size + 100);
+	char* tac = (char*)malloc(size + 1000);
 	if (!strcmp(node->type_str, "ExtDef")) {
 		if (node->children_num == 3) {
 			if(!strcmp(node->children[1]->type_str, "FunDec")) {
 				sprintf(tac, "FUNCTION %s :\n", node->children[1]->children[0]->value);
+				Type* function_type = symtab_lookup(function_symtab, node->children[1]->children[0]->value);
+				FieldList* arg = function_type->function->args;
+				while (arg != NULL) {
+					sprintf(tac, "%sPARAM var%s\n", tac, arg->name);
+					arg = arg->next;
+				}
 			}
 		}
 	}
@@ -944,7 +949,9 @@ char* translate_Exp(Node* Exp, char* place) {
 				sprintf(tac, "READ %s\n", place);
 				return tac;
 			} else {
-
+				char* tac = (char*)malloc(50);
+				sprintf(tac, "%s := CALL %s\n", place, Exp->children[0]->value);
+				return tac;
 			}
 		} else if (!strcmp(Exp->children[1]->type_str, "Exp")) {
 			return translate_Exp(Exp->children[1], place);
@@ -966,6 +973,18 @@ char* translate_Exp(Node* Exp, char* place) {
 				char* code = translate_Exp(Exp->children[2]->children[0], tp);
 				char* tac = (char*)malloc(strlen(code) + 30);
 				sprintf(tac, "%sWRITE %s\n", code, tp);
+				return tac;
+			} else {
+				Type* function_type = symtab_lookup(function_symtab, Exp->children[0]->value);
+				int args_num = function_type->function->args_num;
+				char** arg_list = (char**)malloc(sizeof(char*) * args_num);
+				char* code1 = translate_Args(Exp->children[2], arg_list, args_num - 1);
+				char* code2 = (char*)malloc(args_num*20);
+				for (int i = 0; i < args_num; i++) {
+					sprintf(code2, "%sARG %s\n", code2, arg_list[i]);
+				}
+				char* tac = (char*)malloc(strlen(code1) + strlen(code2) + 50);
+				sprintf(tac, "%s%s%s := CALL %s\n", code1, code2, place, Exp->children[0]->value);
 				return tac;
 			}
 		}
@@ -1083,6 +1102,24 @@ char* translate_Dec(Node* Dec) {
 		char* code2 = (char*)malloc(strlen(lv) + 10);
 		sprintf(code2, "var%s := %s\n", lv, tp);
 		char* tac = (char*)malloc(strlen(code1) + strlen(code2) + 10);
+		sprintf(tac, "%s%s", code1, code2);
+		return tac;
+	}
+}
+
+char* translate_Args(Node* Args, char** arg_list, int index) {
+	arg_list[index] = (char*)malloc(20);
+	if (Args->children_num == 1) {
+		char* tp = new_place();
+		char* code = translate_Exp(Args->children[0], tp);
+		sprintf(arg_list[index], "%s", tp);
+		return code;
+	} else if (Args->children_num == 3) {
+		char* tp = new_place();
+		char* code1 = translate_Exp(Args->children[0], tp);
+		sprintf(arg_list[index], "%s", tp);
+		char* code2 = translate_Args(Args->children[2], arg_list, index - 1);
+		char* tac = (char*)malloc(strlen(code1) + strlen(code2) + 50);
 		sprintf(tac, "%s%s", code1, code2);
 		return tac;
 	}
