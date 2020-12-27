@@ -69,6 +69,7 @@ char* new_place();
 char* new_label();
 char* translate_Node(Node* node, int l);
 char* translate_Exp(Node* Exp, char* place);
+char* translate_cond_Exp(Node* Exp, char* lb_t, char* lb_f);
 char* translate_Stmt(Node* Stmt);
 char* translate_Dec(Node* Dec);
 

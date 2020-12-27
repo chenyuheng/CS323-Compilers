@@ -857,15 +857,13 @@ char* translate_Node(Node* node, int l) {
 			//printf("%s: %d(%d)\n", node->type_str, node->children_num, node->line_num);
 	for (int i = 0; i < node->children_num; i++) {
 		if (!strcmp(node->children[i]->type_str, "Exp")) {
-			codes[i] = 
-			translate_Exp(node->children[i], new_place());
+			codes[i] = translate_Exp(node->children[i], new_place());
 		} else if (!strcmp(node->children[i]->type_str, "Stmt")) {
 			codes[i] = translate_Stmt(node->children[i]);
 		} else if (!strcmp(node->children[i]->type_str, "Dec") && node->children[i]->children_num == 3) {
 			codes[i] = translate_Dec(node->children[i]);
 		} else {
-			codes[i] =
-			 translate_Node(node->children[i], l + 1);
+			codes[i] = translate_Node(node->children[i], l + 1);
 		}
 		size += strlen(codes[i]);
 	}
@@ -948,6 +946,18 @@ char* translate_Exp(Node* Exp, char* place) {
 			} else {
 
 			}
+		} else if (!strcmp(Exp->children[1]->type_str, "Exp")) {
+			return translate_Exp(Exp->children[1], place);
+		} else if (!strcmp(Exp->children[1]->type_str, "AND") || !strcmp(Exp->children[1]->type_str, "OR")
+		 	 	|| !strcmp(Exp->children[1]->type_str, "EQ") || !strcmp(Exp->children[1]->type_str, "NE")
+		 		|| !strcmp(Exp->children[1]->type_str, "LT") || !strcmp(Exp->children[1]->type_str, "LE")
+		 		|| !strcmp(Exp->children[1]->type_str, "GT") || !strcmp(Exp->children[1]->type_str, "GE")) {
+			char* lb1 = new_label();
+			char* lb2 = new_label();
+			char* code1 = translate_cond_Exp(Exp, lb1, lb2);
+			char* tac = (char*)malloc(strlen(code1) + 100);
+			sprintf(tac, "%s := #0\n%sLABEL %s\n%s := #1\nLABEL %s\n", place, code1, lb1, place, lb2);
+			return tac;
 		}
 	} else if (Exp->children_num == 4) {
 		if (!strcmp(Exp->children[0]->type_str, "ID")) {
@@ -962,17 +972,106 @@ char* translate_Exp(Node* Exp, char* place) {
 	}
 }
 
+char* translate_cond_Exp(Node* Exp, char* lb_t, char* lb_f) {
+	if (Exp->children_num == 2) {
+		if (!strcmp(Exp->children[0]->type_str, "NOT")) {
+			return translate_cond_Exp(Exp, lb_f, lb_t);
+		}
+	} else if (Exp->children_num == 3) {
+		if (!strcmp(Exp->children[1]->type_str, "AND")) {
+			char* lb1 = new_label();
+			char* code1 = translate_cond_Exp(Exp->children[0], lb1, lb_f);
+			char* code2 = (char*)malloc(30);
+			sprintf(code2, "LABEL %s\n", lb1);
+			char* code3 = translate_cond_Exp(Exp->children[2], lb_t, lb_f);
+			char* tac = (char*)malloc(strlen(code1) + strlen(code3) + 50);
+			sprintf(tac, "%s%s%s", code1, code2, code3);
+			return tac;
+		} else if (!strcmp(Exp->children[1]->type_str, "OR")) {
+			char* lb1 = new_label();
+			char* code1 = translate_cond_Exp(Exp->children[0], lb_t, lb1);
+			char* code2 = (char*)malloc(30);
+			sprintf(code2, "LABEL %s\n", lb1);
+			char* code3 = translate_cond_Exp(Exp->children[2], lb_t, lb_f);
+			char* tac = (char*)malloc(strlen(code1) + strlen(code3) + 50);
+			sprintf(tac, "%s%s%s", code1, code2, code3);
+			return tac;
+		} else if (!strcmp(Exp->children[1]->type_str, "EQ") || !strcmp(Exp->children[1]->type_str, "NE") 
+			    || !strcmp(Exp->children[1]->type_str, "GT") || !strcmp(Exp->children[1]->type_str, "GE") 
+			    || !strcmp(Exp->children[1]->type_str, "LT") || !strcmp(Exp->children[1]->type_str, "LE")) {
+			char* t1 = new_place();
+			char* t2 = new_place();
+			char* code1 = translate_Exp(Exp->children[0], t1);
+			char* code2 = translate_Exp(Exp->children[2], t2);
+			char relop[5];
+			if (!strcmp(Exp->children[1]->type_str, "EQ")) {
+				strcpy(relop, "==");
+			} else if (!strcmp(Exp->children[1]->type_str, "NQ")) {
+				strcpy(relop, "!=");
+			} else if (!strcmp(Exp->children[1]->type_str, "GT")) {
+				strcpy(relop, ">");
+			} else if (!strcmp(Exp->children[1]->type_str, "GE")) {
+				strcpy(relop, ">=");
+			} else if (!strcmp(Exp->children[1]->type_str, "LT")) {
+				strcpy(relop, "<");
+			} else if (!strcmp(Exp->children[1]->type_str, "LE")) {
+				strcpy(relop, "<=");
+			}
+			char* tac = (char*)malloc(strlen(code1) + strlen(code2) + 50);
+			sprintf(tac, "%s%sIF %s %s %s GOTO %s\nGOTO %s\n", code1, code2, t1, relop, t2, lb_t, lb_f);
+			return tac;
+		}
+	}
+}
+
 char* translate_Stmt(Node* Stmt) {
 	if (Stmt->children_num == 1) { // CompSet
-		return translate_Node(Stmt->children[0], 10);
+		if (!strcmp(Stmt->children[0]->type_str, "CompSt")) {
+			return translate_Node(Stmt->children[0], 10);
+		}
 	} else if (Stmt->children_num == 2) {
-		return translate_Exp(Stmt->children[0], new_place());
+		if (!strcmp(Stmt->children[0]->type_str, "Exp")) {
+			return translate_Exp(Stmt->children[0], new_place());
+		}
 	} else if (Stmt->children_num == 3) { // RETURN Exp SEMI
-		char* tp = new_place();
-		char* code = translate_Exp(Stmt->children[1], tp);
-		char* tac = (char*)malloc(strlen(code) + 20);
-		sprintf(tac, "%sRETURN %s\n", code, tp);
-		return tac;
+		if (!strcmp(Stmt->children[0]->type_str, "RETURN")) {
+			char* tp = new_place();
+			char* code = translate_Exp(Stmt->children[1], tp);
+			char* tac = (char*)malloc(strlen(code) + 20);
+			sprintf(tac, "%sRETURN %s\n", code, tp);
+			return tac;
+		}
+	} else if (Stmt->children_num == 5) {
+		if (!strcmp(Stmt->children[0]->type_str, "IF")) {
+			char* lb1 = new_label();
+			char* lb2 = new_label();
+			char* code1 = translate_cond_Exp(Stmt->children[2], lb1, lb2);
+			char* code2 = translate_Stmt(Stmt->children[4]);
+			char* tac = (char*)malloc(strlen(code1) + strlen(code2) + 50);
+			sprintf(tac, "%sLABEL %s\n%sLABEL %s\n", code1, lb1, code2, lb2);
+			return tac;
+		} else if (!strcmp(Stmt->children[0]->type_str, "WHILE")) {
+			char* lb1 = new_label();
+			char* lb2 = new_label();
+			char* lb3 = new_label();
+			char* code1 = translate_cond_Exp(Stmt->children[2], lb2, lb3);
+			char* code2 = translate_Stmt(Stmt->children[4]);
+			char* tac = (char*)malloc(strlen(code1) + strlen(code2) + 50);
+			sprintf(tac, "LABEL %s\n%sLABEL %s\n%sGOTO %s\nLABEL %s\n", lb1, code1, lb2, code2, lb1, lb3);
+			return tac;
+		}
+	} else if (Stmt->children_num == 7) {
+		if (!strcmp(Stmt->children[0]->type_str, "IF")) {
+			char* lb1 = new_label();
+			char* lb2 = new_label();
+			char* lb3 = new_label();
+			char* code1 = translate_cond_Exp(Stmt->children[2], lb1, lb2);
+			char* code2 = translate_Stmt(Stmt->children[4]);
+			char* code3 = translate_Stmt(Stmt->children[6]);
+			char* tac = (char*)malloc(strlen(code1) + strlen(code2) + strlen(code3) + 50);
+			sprintf(tac, "%sLABEL %s\n%sGOTO %s\nLABEL %s\n%sLABEL %s\n", code1, lb1, code2, lb3, lb2, code3, lb3);
+			return tac;
+		}
 	}
 }
 
