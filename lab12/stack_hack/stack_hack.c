@@ -8,6 +8,7 @@
 
 
 void backdoor(char* cmd) {
+    printf("%p\n", cmd);
     system(cmd);
 }
 
