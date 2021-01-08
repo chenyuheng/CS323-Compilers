@@ -2,29 +2,12 @@
 
 /* the output file descriptor, may not be explicitly used */
 FILE *fd;
+Register current_reg;
+int var_offset;
 
 #define _tac_kind(tac) (((tac)->code).kind)
 #define _tac_quadruple(tac) (((tac)->code).tac)
 #define _reg_name(reg) regs[reg].name
-
-
-Register get_register(tac_opd *opd){
-    assert(opd->kind == OP_VARIABLE);
-    char *var = opd->char_val;
-    /* COMPLETE the register allocation */
-    return t0;
-}
-
-Register get_register_w(tac_opd *opd){
-    assert(opd->kind == OP_VARIABLE);
-    char *var = opd->char_val;
-    /* COMPLETE the register allocation (for write) */
-    return s0;
-}
-
-void spill_register(Register reg){
-    /* COMPLETE the register spilling */
-}
 
 
 void _mips_printf(const char *fmt, ...){
@@ -44,6 +27,93 @@ void _mips_iprintf(const char *fmt, ...){
     fputs("\n", fd);
 }
 
+// RETURN NULL if not found
+struct VarDesc* search_VarDesc(char* var_name) {
+    //printf("search: %s\n", var_name);
+    struct VarDesc* temp = vars;
+    while (temp != NULL) {
+        if (!strcmp(var_name, temp->var)) {
+            //printf("found: %s\n", temp->var);
+            return temp;}
+        temp = temp->next;
+    }
+    //printf("not found\n");
+
+    return NULL;
+}
+
+struct VarDesc* add_to_vars(char* var_name) {
+    // create new VarDesc
+    struct VarDesc* new_VarDesc = (struct VarDesc*) malloc(sizeof(struct VarDesc));
+    strcpy(new_VarDesc->var, var_name);
+    new_VarDesc->offset = var_offset + 4;
+    var_offset += 4;
+    _mips_iprintf("addi %s, %s, %d", _reg_name(sp), _reg_name(sp), -4);
+    // add to the end of vars
+    struct VarDesc* temp = vars;
+    while (temp->next != NULL) temp = temp->next;
+    temp->next = new_VarDesc;
+    return new_VarDesc;
+}
+
+Register get_register(tac_opd *opd){
+    assert(opd->kind == OP_VARIABLE);
+    char *var = opd->char_val;
+    /* COMPLETE the register allocation */
+    struct VarDesc* varDesc = search_VarDesc(var);
+    assert(varDesc != NULL);
+    if (varDesc->reg == zero) {
+        _mips_iprintf("lw %s, %d(%s)", _reg_name(current_reg), -varDesc->offset, _reg_name(fp));
+        strcpy(regs[current_reg].var, var);
+        varDesc->reg = current_reg++;
+    }
+    return varDesc->reg;
+}
+
+Register get_register_w(tac_opd *opd){
+    assert(opd->kind == OP_VARIABLE);
+    char *var = opd->char_val;
+    /* COMPLETE the register allocation (for write) */
+    struct VarDesc* varDesc = search_VarDesc(var);
+    if (varDesc != NULL) {        
+        if (varDesc->reg == zero) {
+            strcpy(regs[current_reg].var, var);
+            varDesc->reg = current_reg++;
+        } else {
+            __assert_fail;
+        }
+    } else {
+        strcpy(regs[current_reg].var, var);
+        //printf("test %d, %s\n", var_offset, var);
+        struct VarDesc* new_VarDesc = add_to_vars(var);
+        new_VarDesc->reg = current_reg;
+        //_mips_iprintf("lw %s, %d(%s)//get register w, varDesc == NULL", regs[current_reg].name, new_VarDesc->offset, regs[sp].name);
+        return current_reg++;
+    }
+    return varDesc->reg;
+}
+
+void spill_register(Register reg){
+    /* COMPLETE the register spilling */
+            //printf("====%s\n", regs[reg].var);
+    struct VarDesc* varDesc = search_VarDesc(regs[reg].var);
+    _mips_iprintf("sw %s, %d(%s)", _reg_name(reg), -varDesc->offset, _reg_name(fp));
+}
+
+void spill_registers() {
+    Register reg = t0;
+    while (strcmp(regs[reg].var, "")) {
+        search_VarDesc(regs[reg].var)->reg = zero;
+        spill_register(reg);
+        strcpy(regs[reg].var, "");
+        reg++;
+    }
+    current_reg = t0;
+}
+
+
+
+
 
 /* PARAM: a pointer to `struct tac_node` instance
    RETURN: the next instruction to be translated */
@@ -55,6 +125,11 @@ tac *emit_label(tac *label){
 
 tac *emit_function(tac *function){
     _mips_printf("%s:", _tac_quadruple(function).funcname);
+    _mips_iprintf("subu %s, %s, %d", _reg_name(sp), _reg_name(sp), 8);
+    _mips_iprintf("sw %s, %d(%s)", _reg_name(ra), 4, _reg_name(sp));
+    _mips_iprintf("sw %s, %d(%s)", _reg_name(fp), 0, _reg_name(sp));
+    _mips_iprintf("move $fp, $sp");
+    var_offset = 4;
     return function->next;
 }
 
@@ -70,6 +145,7 @@ tac *emit_assign(tac *assign){
         y = get_register(_tac_quadruple(assign).right);
         _mips_iprintf("move %s, %s", _reg_name(x), _reg_name(y));
     }
+    spill_registers();
     return assign->next;
 }
 
@@ -96,6 +172,7 @@ tac *emit_add(tac *add){
                                         _reg_name(y),
                                         _reg_name(z));
     }
+    spill_registers();
     return add->next;
 }
 
@@ -123,6 +200,7 @@ tac *emit_sub(tac *sub){
                                         _reg_name(y),
                                         _reg_name(z));
     }
+    spill_registers();
     return sub->next;
 }
 
@@ -149,6 +227,7 @@ tac *emit_mul(tac *mul){
     _mips_iprintf("mul %s, %s, %s", _reg_name(x),
                                     _reg_name(y),
                                     _reg_name(z));
+    spill_registers();
     return mul->next;
 }
 
@@ -174,6 +253,7 @@ tac *emit_div(tac *div){
     }
     _mips_iprintf("div %s, %s", _reg_name(y), _reg_name(z));
     _mips_iprintf("mflo %s", _reg_name(x));
+    spill_registers();
     return div->next;
 }
 
@@ -241,6 +321,7 @@ tac *emit_ifeq(tac *ifeq){
 
 tac *emit_return(tac *return_){
     /* COMPLETE emit function */
+    _mips_iprintf("jr %s", _reg_name(ra));
     return return_->next;
 }
 
@@ -265,7 +346,7 @@ tac *emit_param(tac *param){
 }
 
 tac *emit_read(tac *read){
-    Register x = get_register(_tac_quadruple(read).p);
+    Register x = get_register_w(_tac_quadruple(read).p);
 
     _mips_iprintf("addi $sp, $sp, -4");
     _mips_iprintf("sw $ra, 0($sp)");
@@ -277,7 +358,7 @@ tac *emit_read(tac *read){
 }
 
 tac *emit_write(tac *write){
-    Register x = get_register_w(_tac_quadruple(write).p);
+    Register x = get_register(_tac_quadruple(write).p);
 
     _mips_iprintf("move $a0, %s", _reg_name(x));
     _mips_iprintf("addi $sp, $sp, -4");
@@ -368,5 +449,7 @@ void mips32_gen(tac *head, FILE *_fd){
     vars = (struct VarDesc*)malloc(sizeof(struct VarDesc));
     vars->next = NULL;
     fd = _fd;
+    current_reg = t0;
+    var_offset = 4;
     emit_code(head);
 }
